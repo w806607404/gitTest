@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s8000temp.dao.SuggestionDataMapper" >
+    
+    <sql id="sql_columns">
+
+            id , 
+            type_id , 
+            company_id , 
+            product_id , 
+            user_id , 
+            mobile , 
+            email , 
+            content , 
+            create_time 
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.s8000temp.dao.domain.SuggestionData" useGeneratedKeys="true" keyProperty="id">
+        insert into t_suggestion_data
+          (
+          <include refid="sql_columns" />
+          )
+        values
+          (
+    	    	#{id},
+	    	    	#{type_id},
+	    	    	#{company_id},
+	    	    	#{product_id},
+	    	    	#{user_id},
+	    	    	#{mobile},
+	    	    	#{email},
+	    	    	#{content},
+	    	    	now()
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s8000temp.dao.domain.SuggestionData">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_suggestion_data t <include refid="sql_where" />
+			<if test="sort!=null">
+				ORDER BY ${sort.param}  ${sort.type} 
+			</if>
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_suggestion_data t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.s8000temp.dao.domain.SuggestionData">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_suggestion_data t
+        where
+        t.id=#{id}
+    </select>
+
+
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_suggestion_data t <include refid="sql_where" />
+    </select>
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_suggestion_data where id=#{id}
+    </delete>
+
+    <update id="update" parameterType="com.scinan.iot.s8000temp.dao.domain.SuggestionData">
+		update t_suggestion_data
+	    <set >
+        	<if test="type_id != null" >
+    	    		type_id = #{type_id},
+		</if>
+        	<if test="company_id != null" >
+    	    		company_id = #{company_id},
+		</if>
+        	<if test="product_id != null" >
+    	    		product_id = #{product_id},
+		</if>
+        	<if test="user_id != null" >
+    	    		user_id = #{user_id},
+		</if>
+        	<if test="mobile != null" >
+    	    		mobile = #{mobile},
+		</if>
+        	<if test="email != null" >
+    	    		email = #{email},
+		</if>
+        	<if test="content != null" >
+    	    		content = #{content},
+		</if>
+        	<if test="create_time != null" >
+    	    		create_time = now(),
+		</if>
+    	    </set>
+	    where id=#{id}
+    </update>
+
+</mapper>

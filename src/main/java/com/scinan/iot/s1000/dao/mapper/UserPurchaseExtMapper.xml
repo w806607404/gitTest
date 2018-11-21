@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.UserPurchaseExtMapper" >
+	<sql id="sql_columns">
+	id,user_id,purchase_time,models,create_time
+	</sql>
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.s1000.dao.domain.UserPurchaseExt">
+        insert into t_user_purchase_ext
+          (
+            user_id,purchase_time,models,create_time
+          )
+        values
+          (
+            #{user_id},#{purchase_time},#{models},#{create_time}
+          )
+    </insert>
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserPurchaseExt">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_user_purchase_ext t <include refid="sql_where" />
+			ORDER BY t.create_time DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_user_purchase_ext t <include refid="sql_where" />
+        </otherwise>
+      </choose>
+    </select>
+    <select id="fetchById" parameterType="java.lang.Integer" resultType="com.scinan.iot.s1000.dao.domain.UserPurchaseExt">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_user_purchase_ext t
+        where
+        t.id=#{id}
+    </select>
+    <select id="fetchByUserInfoList" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserPurchaseExt">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_user_purchase_ext t
+        where (1=1) 
+        <if test="user_id != null" >
+	        and user_id = #{user_id}
+	    </if>
+        ORDER BY create_time DESC
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_user_purchase_ext t <include refid="sql_where" />
+    </select>
+    <update id="update" parameterType="com.scinan.iot.s1000.dao.domain.UserPurchaseExt">
+		update t_user_purchase_ext
+	    <set >
+	      <if test="purchase_time != null" >
+	        purchase_time = #{purchase_time},
+	      </if>
+	      <if test="models != null" >
+	        models = #{models},
+	      </if>
+	      <if test="user_id != null" >
+	        user_id = #{user_id},
+	      </if>
+	      <if test="create_time != null" >
+	        create_time = #{create_time},
+	      </if>
+	    </set>
+	    where id = #{id}
+    </update>
+</mapper>

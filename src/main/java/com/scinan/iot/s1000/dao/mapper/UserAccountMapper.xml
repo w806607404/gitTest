@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.UserAccountMapper" >
+  
+   <sql id="sql_columns">
+	id,app_key,user_id,inviter_id,invit_code,balance_pay,balance_present,create_time,update_time
+   </sql>
+   
+   <sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+	
+	<select id="fetchById" resultType="com.scinan.iot.s1000.dao.domain.UserAccountBean">
+	   SELECT <include refid="sql_columns"/> FROM t_user_account where id = #{id}
+	</select>
+	
+	<select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserAccountBean">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" />,t1.user_name as user_name
+			FROM t_user_account
+			left join SNDB_S1000.t_user_info t1
+			on user_id = t1.id
+			<include refid="sql_where" />
+			ORDER BY id DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+            SELECT <include refid="sql_columns" />,t1.user_name as user_name
+			FROM t_user_account
+			left join SNDB_S1000.t_user_info t1
+			on user_id = t1.id
+            <include refid="sql_where" />
+            ORDER BY id DESC
+        </otherwise>
+      </choose>         
+    </select>
+    
+	 <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_user_account t <include refid="sql_where" />
+    </select>
+    
+    <select id="countAppKeyAndUserId" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_user_account t where user_id = #{user_id} and app_key = #{app_key}
+    </select>  
+    
+    <update id="update" parameterType="com.scinan.iot.s1000.dao.domain.UserAccountBean">
+		update t_user_account
+	    <set> 	      
+	      <if test="balance_pay != null and balance_pay != ''">
+	        balance_pay = balance_pay + #{balance_pay},
+	      </if>	      	      
+	      <if test="balance_present != null and balance_present != ''">
+	        balance_present = balance_present + #{balance_present},
+	      </if>
+	      update_time = now()
+	    </set>
+	    where app_key = #{app_key} and user_id = #{user_id}
+	 </update>  
+	
+</mapper>

@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.AccountInfoMapper" >
+    <!--  <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>-->
+	
+	<sql id="sql_columns">
+		id,user_info_id,parent_user_id,parent_user_path,user_password,init_pwd,user_name,user_nickname,role_id,status,user_type,identity_card,identity_img,bank_name,bank_card,alipay_name,alipay_card,user_wechat,user_email,note,create_time,update_time,company_id,agent_name,agent_phone,province_id,province_name,city_id,city_name,district_id,district_name,user_address,ratio_amount,subsidy_amount,other_user_name,other_user_contact,pay_proof,identity_name     
+	</sql>
+	
+	<sql id="sql_columns_no_id">
+		user_info_id,parent_user_id,parent_user_path,user_password,init_pwd,user_name,user_nickname,role_id,status,user_type,identity_card,identity_img,bank_name,bank_card,alipay_name,alipay_card,user_wechat,user_email,note,create_time,update_time,company_id,agent_name,agent_phone,province_id,province_name,city_id,city_name,district_id,district_name,user_address,ratio_amount,subsidy_amount,other_user_name,other_user_contact,pay_proof,identity_name
+	</sql>
+	
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+    
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_account_info t <include refid="sql_where" />
+			<if test="sort!=null">
+				ORDER BY ${sort.param}  ${sort.type} 
+			</if>
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" />  FROM t_account_info t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    <select id="fetchByUserInfo" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+         SELECT <include refid="sql_columns" />,(select role_type from t_role r where r.id=t.role_id)role_type,(select name from t_role o where o.id=t.role_id)role_name  FROM t_account_info t where  (1=1)
+         <if test="id!=null">
+				AND id = #{id}
+		 </if>
+		 <if test="user_name!=null">
+				AND user_name = #{user_name}
+		 </if>
+		 limit 1
+    </select>
+    
+     <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+         SELECT <include refid="sql_columns" />,(select role_type from t_role r where r.id=t.role_id)role_type,(select name from t_role o where o.id=t.role_id)role_name FROM t_account_info t where  (1=1)
+				AND t.id = #{id} 
+    </select>
+    
+    
+	<!-- 用户列表 begin -->
+	<select id="fetchUserByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       select t1.id,t1.role_name,<include refid="sql_columns_no_id" /> from (SELECT <include refid="sql_columns" />,(select o.name from t_role o where o.id=t.role_id)role_name FROM t_account_info t  where (1=1)
+	  	and t.id>1
+	  <if test="user_name!=null">
+			 and t.user_name = #{user_name}
+	   </if>
+	   <if test="user_nickname!=null">
+			 and t.user_nickname like '%${user_nickname}%'
+	   </if>
+	    <if test="parent_user_id!=null">
+			 and t.parent_user_id = #{parent_user_id}
+	   </if>
+	    <if test="province_id!=null">
+			 and t.province_id = #{province_id}
+	   </if>
+	    <if test="city_id!=null">
+			 and t.city_id = #{city_id}
+	   </if>
+	    <if test="district_id!=null">
+			 and t.district_id = #{district_id}
+	   </if>
+	   ) t1 where t1.status = 0 or t1.status = 1 order by t1.create_time asc limit #{offset},#{limit}    
+    </select>
+    
+	 <select id="countUserByNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+      select count(1) from (SELECT t.status FROM t_account_info t where (1=1) and t.id>1
+	   <if test="user_name!=null">
+			 and t.user_name = #{user_name}
+	   </if>
+	   <if test="user_nickname!=null">
+			 and t.user_nickname like '%${user_nickname}%'
+	   </if>
+	   <if test="parent_user_id!=null">
+			 and t.parent_user_id = #{parent_user_id}
+	   </if>
+	    <if test="province_id!=null">
+			 and t.province_id = #{province_id}
+	   </if>
+	    <if test="city_id!=null">
+			 and t.city_id = #{city_id}
+	   </if>
+	    <if test="district_id!=null">
+			 and t.district_id = #{district_id}
+	   </if>
+	   ) t1 where t1.status = 0 or t1.status = 1
+    </select>
+    <!-- 用户列表 end -->
+    
+   <!-- 用户审核列表  begin --> 
+    <select id="fetchAuditUser" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       select t1.id,t1.role_name,<include refid="sql_columns_no_id" /> from (SELECT <include refid="sql_columns" />,(select o.name from t_role o where o.id=t.role_id)role_name FROM t_account_info t  where (1=1)
+	  	and t.id>1
+	   <if test="user_name!=null">
+			 and t.user_name = #{user_name}
+	   </if>
+	   <if test="user_nickname!=null">
+			 and t.user_nickname like '%${user_nickname}%'
+	   </if>
+	    <if test="parent_user_id!=null">
+			 and t.parent_user_id = #{parent_user_id}
+	   </if>
+	    <if test="province_id!=null">
+			 and t.province_id = #{province_id}
+	   </if>
+	    <if test="city_id!=null">
+			 and t.city_id = #{city_id}
+	   </if>
+	    <if test="district_id!=null">
+			 and t.district_id = #{district_id}
+	   </if>
+	   ) t1 where t1.status in (2,3,4,5,6) order by t1.create_time asc limit #{offset},#{limit}    
+    </select>
+    
+     <select id="countAuditUser" parameterType="java.util.Map" resultType="java.lang.Integer">
+      select count(1) from (SELECT t.status FROM t_account_info t where (1=1) and t.id>1
+	   <if test="user_name!=null">
+			 and t.user_name = #{user_name}
+	   </if>
+	   <if test="user_nickname!=null">
+			 and t.user_nickname like '%${user_nickname}%'
+	   </if>
+	   <if test="parent_user_id!=null">
+			 and t.parent_user_id = #{parent_user_id}
+	   </if>
+	    <if test="province_id!=null">
+			 and t.province_id = #{province_id}
+	   </if>
+	    <if test="city_id!=null">
+			 and t.city_id = #{city_id}
+	   </if>
+	    <if test="district_id!=null">
+			 and t.district_id = #{district_id}
+	   </if>
+	   ) t1 where t1.status in (2,3,4,5,6)
+    </select>
+    <!-- 审核列表  end --> 
+    
+   	<!-- 通用查询用户列表 --> 
+    <select id="fetchUserInfoBase" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+    	select t.id,t.user_info_id,t.parent_user_id,t.parent_user_path,t.user_name,t.user_nickname,t.role_id,t.status,t.user_type,t.identity_card,t.identity_img,t.bank_name,t.bank_card,t.alipay_name,t.alipay_card,t.user_wechat,t.user_email,t.note,t.company_id,t.agent_name,t.agent_phone,t.province_id,t.province_name,t.city_id,t.city_name,t.district_id,t.district_name,t.user_address,t.ratio_amount,t.subsidy_amount,t.other_user_name,t.other_user_contact,t.pay_proof
+	,t1.role_type  FROM t_account_info t left join t_role t1 on t1.id = t.role_id  where (1=1)
+    	<if test="role_type != null">
+    		and t1.role_type = #{role_type}
+    	</if>
+    	<if test="district_id != null">
+    		and t.district_id=#{district_id}
+    	</if>
+    	<if test="cur_user_id != null">
+    		and t.id!=#{cur_user_id}
+    	</if>
+    	 <if test="user_name!=null">
+			 and t.user_name = #{user_name}
+	   </if>
+	   <if test="user_nickname!=null">
+			 and t.user_nickname like '%${user_nickname}%'
+	   </if>
+	 	 and t.status in(1,2,4,5)
+    	 order by t.create_time desc
+    </select>
+    
+    
+    <select id="fetchUserInfoByAgent" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+    	select t.id,t.user_info_id,t.parent_user_id,t.parent_user_path,t.user_name,t.user_nickname,t.role_id,t.status,t.user_type,t.identity_card,t.identity_img,t.bank_name,t.bank_card,t.alipay_name,t.alipay_card,t.user_wechat,t.user_email,t.note,t.company_id,t.agent_name,t.agent_phone,t.province_id,t.province_name,t.city_id,t.city_name,t.district_id,t.district_name,t.user_address,t.ratio_amount,t.subsidy_amount,t.other_user_name,t.other_user_contact,t.pay_proof
+	,t1.role_type  FROM t_account_info t left join t_role t1 on t1.id = t.role_id  where (1=1)
+    	<if test="role_type != null">
+    		and t1.role_type = #{role_type}
+    	</if>
+    	<if test="district_id != null">
+    		and t.district_id=#{district_id}
+    	</if>
+    	<if test="cur_user_id != null">
+    		and t.id!=#{cur_user_id}
+    	</if>
+	 	 and t.status in(1,5)
+    	 order by t.create_time desc
+    </select>
+	
+	 <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountInfo" useGeneratedKeys="true" keyProperty="id">
+           insert into t_account_info
+          (
+            user_info_id,parent_user_id,parent_user_path,user_name,user_nickname,user_password,init_pwd,role_id,status,user_type,identity_card,identity_img,bank_name,bank_card,alipay_name,alipay_card,user_wechat,user_email,note,create_time,update_time,company_id,agent_name,agent_phone,province_id,province_name,city_id,city_name,district_id,district_name,user_address,ratio_amount,subsidy_amount,other_user_name,other_user_contact,pay_proof,identity_name
+          )
+        values
+          (
+          	#{user_info_id},
+            #{parent_user_id},
+            #{parent_user_path},
+            #{user_name},
+            #{user_nickname},
+            #{user_password},
+            #{init_pwd},
+            #{role_id},#{status},#{user_type},#{identity_card},#{identity_img},#{bank_name},#{bank_card},#{alipay_name},#{alipay_card}, #{user_wechat},#{user_email},
+            #{note},#{create_time},#{update_time},#{company_id},#{agent_name},#{agent_phone},
+            #{province_id},#{province_name},#{city_id},#{city_name},#{district_id},#{district_name},#{user_address},#{ratio_amount},#{subsidy_amount},#{other_user_name},#{other_user_contact},#{pay_proof},#{identity_name}
+          )
+    </insert>
+	
+	 <update id="update" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+		update t_account_info
+	    <set >
+	      <if test="role_id != null" >
+	        role_id = #{role_id},
+	      </if>
+	      <if test="user_nickname != null" >
+	        user_nickname = #{user_nickname},
+	      </if>
+	      <if test="user_password != null" >
+	        user_password = #{user_password},
+	      </if>
+	      <if test="init_pwd != null" >
+	        init_pwd = #{init_pwd},
+	      </if>
+	      <if test="status != null" >
+	        status = #{status},
+	      </if>
+	      <if test="note != null" >
+	        note = #{note},
+	      </if>
+	      <if test="update_time != null" >
+	        update_time = #{update_time},
+	      </if>
+	      <if test="parent_user_path != null" >
+	        parent_user_path = #{parent_user_path},
+	      </if>
+	      <if test="parent_user_id != null" >
+	        parent_user_id = #{parent_user_id},
+	      </if>
+	      <if test="agent_name != null" >
+	        agent_name = #{agent_name},
+	      </if>
+	      <if test="agent_phone != null" >
+	        agent_phone = #{agent_phone},
+	      </if>
+	       <if test="province_id != null" >
+	        province_id = #{province_id},
+	      </if>
+	       <if test="province_name != null" >
+	        province_name = #{province_name},
+	      </if>
+	       <if test="city_id != null" >
+	        city_id = #{city_id},
+	      </if>
+	       <if test="city_name != null" >
+	        city_name = #{city_name},
+	      </if>
+	       <if test="district_id != null" >
+	        district_id = #{district_id},
+	      </if>
+	       <if test="district_name != null" >
+	        district_name = #{district_name},
+	      </if>
+	      <if test="user_info_id != null" >
+	        user_info_id = #{user_info_id},
+	      </if>
+	      <if test="user_type != null" >
+	        user_type = #{user_type},
+	      </if>
+	       <if test="identity_card != null" >
+	        identity_card = #{identity_card},
+	      </if>
+	       <if test="identity_img != null" >
+	        identity_img = #{identity_img},
+	      </if>
+	       <if test="bank_name != null" >
+	        bank_name = #{bank_name},
+	      </if>
+	       <if test="bank_card != null" >
+	        bank_card = #{bank_card},
+	      </if>
+	       <if test="alipay_name != null" >
+	        alipay_name = #{alipay_name},
+	      </if>
+	       <if test="alipay_card != null" >
+	        alipay_card = #{alipay_card},
+	      </if>
+	      
+	       <if test="user_wechat != null" >
+	        user_wechat = #{user_wechat},
+	      </if>
+	       <if test="user_email != null" >
+	        user_email = #{user_email},
+	      </if>
+	       <if test="user_address != null" >
+	        user_address = #{user_address},
+	      </if>
+	       <if test="ratio_amount != null" >
+	        ratio_amount = #{ratio_amount},
+	      </if>
+	       <if test="subsidy_amount != null" >
+	        subsidy_amount = #{subsidy_amount},
+	      </if>
+	       <if test="other_user_name != null" >
+	        other_user_name = #{other_user_name},
+	      </if>
+	      <if test="other_user_contact != null" >
+	        other_user_contact = #{other_user_contact},
+	      </if>
+	      <if test="pay_proof != null" >
+	        pay_proof = #{pay_proof},
+	      </if>
+	      <if test="identity_name != null" >
+	        identity_name = #{identity_name},
+	      </if>
+	    </set>
+	    where id = #{id,jdbcType=BIGINT}
+    </update>
+	 <delete id="delete" parameterType="java.lang.Long">
+        delete from t_account_info where id = #{id,jdbcType=BIGINT}
+    </delete>
+	<select id="fetchOrganizationByUserInfo" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT t.id,t.user_name FROM t_account_info t  where (1=1)
+	   order by t.create_time desc
+    </select>
+	<select id="fetchUserInfoOfOther" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT t.id,t.user_name FROM t_account_info t  <include refid="sql_where" />
+    </select>
+    <select id="fetchDealerByUserInfo" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT id,user_name,user_nickname FROM t_account_info where status = 1 
+    </select>
+    <select id="fetchLowerDealerByUserInfo" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT id,user_name,user_nickname,parent_user_path,(select role_type from t_role r where r.id=t.role_id) role_type FROM t_account_info t where status = 1 and id>1
+       <if test="company_id != null" >
+	       and company_id = #{company_id}
+	   </if>
+	   <if test="parent_user_id != null" >
+	       and parent_user_id = #{parent_user_id}
+	   </if>
+       order by id asc 
+    </select>
+    <select id="fetchDealerByUserList" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT id,user_name,user_nickname FROM t_account_info where status = 1 and parent_user_id>0
+       <if test="id != null" >
+	       and parent_user_id = #{id}
+	   </if>
+       order by id asc
+    </select>
+    <select id="fetchUserByOneKey" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT t.id,t.user_nickname,t.role_id,t.user_name,t.agent_name FROM t_account_info t  where (1=1) 
+	   <if test="parent_user_id!=null">
+			 and t.parent_user_id = #{parent_user_id}
+	   </if>
+	   <if test="company_id!=null">
+			 and t.company_id = #{company_id}
+	   </if>
+	    <if test="status!=null">
+			 and t.status = #{status}
+	   </if>
+	   order by t.create_time desc  
+    </select>
+    <select id="fetchUserByRoleTypeList" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT t.id,t.user_nickname,t.user_name,t.role_id,(select r.parent_userid from t_role  r  where t.role_id=r.id) parent_userid FROM t_account_info t  where (1=1) and t.status=1
+	   <if test="parent_user_id!=null">
+			 and t.parent_user_id = #{parent_user_id}
+	   </if>
+	   <if test="company_id!=null">
+			 and t.company_id = #{company_id}
+	   </if>
+	   order by t.create_time desc  
+    </select>
+    <select id="fetchUserByRoleName" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT (select r.name from t_role  r  where t.role_id=r.id ) role_name FROM  t_account_info t where id = #{id}  
+    </select>
+    <select id="fetchUserByRoleList" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+        SELECT t.id,t.user_name,t.user_nickname,t.parent_user_path,t.parent_user_id,r.role_type,r.parent_userid FROM t_account_info t,t_role r
+        where r.id=t.role_id and t.status = 1 and t.id>1 and t.company_id = #{company_id} and r.parent_userid=0  and t.parent_user_path like '${parent_user_path}%' and r.role_type&gt;#{role_type}  order by r.role_type asc
+    </select>
+    
+    <select id="getUserInfoByUserNickname" parameterType="java.lang.String" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT <include refid="sql_columns" /> FROM t_account_info t  where (1=1)
+		and t.user_nickname = #{user_nickname} limit 1
+    </select>
+    
+    <select id="getListByParent" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       SELECT t.id,t.user_nickname,t.agent_name,t.user_name FROM t_account_info t  where (1=1)
+	  	and t.id>1
+	  	<if test="status!=null">
+			 and t.status = #{status}
+	    </if>
+	  	<if test="parent_user_id!=null">
+			 and t.id = #{parent_user_id}
+	    </if>
+	    <if test="user_id!=null">
+			 and t.parent_user_id = #{user_id}
+	    </if>
+	    <if test="role_id!=null">
+			 and t.role_id != #{role_id}
+	    </if>
+	    
+	    <if test="agent_user_id!=null">
+			 and t.parent_user_id = #{agent_user_id} or t.id = #{agent_parent_user_id}
+	    </if>
+	    
+	    <if test="status!=null">
+			 and t.status = #{status}
+	    </if>
+	   <if test="offset!=null">
+	   order by t.create_time desc limit #{offset},#{limit}    
+	    </if>
+    </select>
+    
+    <select id="getAllByCompany" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       select <include refid="sql_columns_no_id" />,t2.id,t2.role_type from (SELECT <include refid="sql_columns" />,(select o.role_type from t_role o where o.id=t.role_id)role_type FROM t_account_info t  where (1=1)
+	  	and t.id>1) t2
+    		 where t2.company_id=#{company_id} and t2.role_type = #{role_type}
+			 and t2.status = 1
+    </select>
+    
+    <!-- 通过district_id区域验证 -->
+    <select id="getUserInfoByDistrict_id" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+       select <include refid="sql_columns_no_id" />,t2.id,t2.role_type from (SELECT <include refid="sql_columns" />,(select o.role_type from t_role o where o.id=t.role_id)role_type FROM t_account_info t  where (1=1)
+	  	and t.id>1) t2
+    		 where t2.district_id=#{district_id} and t2.role_type = 2
+			 and t2.status in (1,2,4,5)
+    </select>
+
+	<select id="fetchLowerDealerByAudit" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountInfo">
+		SELECT id,user_name,user_nickname,parent_user_path,(select role_type from t_role r where r.id=t.role_id) role_type FROM t_account_info t where id>1
+		<if test="company_id != null" >
+			and company_id = #{company_id}
+		</if>
+		<if test="parent_user_id != null" >
+			and parent_user_id = #{parent_user_id}
+		</if>
+		order by id asc
+	</select>
+
+
+</mapper>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.UserBasicInfoMapper" >
+<!--     <cache type="org.mybatis.caches.redis.LoggingRedisCache"/> -->
+    <sql id="sql_columns">
+            id,
+            name,
+            name_cn,
+            company_info,
+            logo_url,
+            company_website,
+            customer_phone,
+            wx_account,
+            wx_qr_code,
+            create_time,
+            user_id,
+            link_name,
+            phone
+    </sql>
+    <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="saveInfo" parameterType="com.scinan.iot.ddeddo.dao.domain.UserBasicInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into t_user_basic_info
+        (
+            name,name_cn,company_info,logo_url,company_website,customer_phone,wx_account,wx_qr_code,create_time,user_id,phone,link_name,company_id
+        )
+        values
+        (
+	        #{name},
+	        #{name_cn},
+	        #{company_info},
+	        #{logo_url},
+	        #{company_website},
+	        #{customer_phone},
+	        #{wx_account},
+	        #{wx_qr_code},
+	        #{create_time},
+	        #{user_id},
+	        #{phone},
+	        #{link_name},
+	        #{company_id}
+        )
+    </insert>
+
+
+    <select id="fetchById" parameterType="java.util.Map"  resultType="com.scinan.iot.ddeddo.dao.domain.UserBasicInfo">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_user_basic_info t
+        where
+        t.user_id=#{user_id} and t.company_id=#{company_id}
+    </select>
+    <select id="fetchByMtlInfo" parameterType="java.util.Map"  resultType="com.scinan.iot.ddeddo.dao.domain.UserBasicInfo">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_user_basic_info t
+        where t.company_id=#{company_id} order by create_time desc limit 1
+    </select>
+    <update id="updateInfo" parameterType="com.scinan.iot.ddeddo.dao.domain.UserBasicInfo">
+        update t_user_basic_info
+        <set >
+            <if test="name != null" >
+                name = #{name},
+            </if>
+            <if test="name_cn != null" >
+                name_cn = #{name_cn},
+            </if>
+            <if test="company_info != null" >
+                company_info = #{company_info},
+            </if>
+            <if test="logo_url != null" >
+                logo_url = #{logo_url},
+            </if>
+            <if test="company_website != null" >
+                company_website = #{company_website},
+            </if>
+            <if test="customer_phone != null" >
+                customer_phone = #{customer_phone},
+            </if>
+            <if test="wx_account != null" >
+                wx_account = #{wx_account},
+            </if>
+            <if test="wx_qr_code != null" >
+                wx_qr_code = #{wx_qr_code},
+            </if>
+            <if test="create_time != null" >
+                create_time = #{create_time},
+            </if>
+            <if test="phone != null" >
+                phone = #{phone},
+            </if>
+            <if test="link_name != null" >
+                link_name = #{link_name},
+            </if>
+        </set>
+        where user_id=#{user_id}
+    </update>
+
+</mapper>

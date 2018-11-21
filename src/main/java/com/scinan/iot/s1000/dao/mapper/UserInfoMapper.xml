@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.UserInfoMapper" >
+  
+   <sql id="sql_columns">
+	id,user_email,user_nickname,user_name,user_phone,user_address,user_passwd,user_operationcode,user_level,latest_logintime,create_time,user_type,login_time,is_developer,user_digit,user_qq,user_mobile,email_flag,qq_openid,img,sex,source,area_code,user_passwd_bak
+   </sql>
+   
+   <sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+	
+	<select id="fetchById" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+	   SELECT <include refid="sql_columns"/> FROM t_user_info where id = #{id}
+	</select>
+	
+	<select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_user_info t
+			<include refid="sql_where" />
+			ORDER BY id DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" />  FROM t_user_info t 
+             <include refid="sql_where" /> ORDER BY id DESC
+        </otherwise>
+      </choose>         
+    </select>
+    
+	 <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_user_info t <include refid="sql_where" />
+    </select>  
+	
+	
+	<select id="fetchUserindustryDistributions" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+		select t3.industry_name as name,count(1) as value from t_user_info t1 
+		left join t_factory_manage t2 
+		on t1.source = t2.id
+		left join SNDB_S9000.t_industry_distribution t3 on t2.industry_id = t3.id
+		where source is not null and t3.industry_name is not null 
+		<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and source in 
+	    	<foreach collection="roleCompanyBeans" item="item" index="index"
+	            open="(" close=")" separator=",">
+	            #{item.company_id}
+	        </foreach>
+		</if>
+		group by t3.industry_id
+	</select>
+	
+	
+	<select id="countUsers" resultType="java.lang.Integer">
+		select count(1) from t_user_info t where 1=1
+		<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and t.source in 
+	    	<foreach collection="roleCompanyBeans" item="item" index="index"
+	            open="(" close=")" separator=",">
+	            #{item.company_id}
+	        </foreach>
+		</if>
+		
+		<if test="create_time != null">
+			and date_format(create_time,'%Y-%m-%d') = CURRENT_DATE
+		</if>
+		
+		<if test="week != null and week != ''">
+			and create_time &gt;= date_add(CURRENT_DATE, interval -7 DAY)  
+			and create_time &lt; CURRENT_DATE 
+		</if>
+		
+		<if test="month != null and month != ''">
+			and create_time &gt;= date_add(CURRENT_DATE, interval -30 DAY)  
+			and create_time &lt; CURRENT_DATE 
+		</if>
+				
+	</select>
+	
+	<select id="fetchUserListByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+     <choose>
+       <when test="limit>0">
+			SELECT
+		     t.user_digit,
+		     t.user_mobile,
+		     t.user_email,
+		     t.user_nickname,
+		     t.user_level,
+		     t.create_time
+		    FROM
+		     t_user_info t
+		     left join sndb_6000000001.t_device_user t1
+		     on t1.user_id = t.id
+		     <include refid="sql_where" />
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+            SELECT
+		     t.user_digit,
+		     t.user_mobile,
+		     t.user_email,
+		     t.user_nickname,
+		     t.user_level,
+		     t.create_time
+		    FROM
+		     t_user_info t
+		     left join sndb_6000000001.t_device_user t1
+		     on t1.user_id = t.id
+		     <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    
+    <insert id="save" parameterType="com.scinan.iot.s1000.dao.domain.UserInfo" useGeneratedKeys="true" keyProperty="id">
+        insert into t_user_info
+          (
+            user_email,user_nickname,user_name,user_passwd,user_digit,user_mobile,create_time,area_code,source
+          )
+        values
+          (
+            #{user_email}, #{user_nickname},#{user_name},#{user_passwd},#{user_digit},#{user_mobile},now(),#{area_code},#{source}
+          )
+    </insert>
+    <update id="update" parameterType="com.scinan.iot.s1000.dao.domain.UserInfo">
+		update t_user_info
+	    <set >
+	      <if test="user_email != null" >
+	        user_email = #{user_email},
+	      </if>
+	      <if test="user_nickname != null" >
+	        user_nickname = #{user_nickname},
+	      </if>
+	      <if test="user_name != null" >
+	        user_name = #{user_name},
+	      </if>
+	      <if test="user_passwd != null" >
+	        user_passwd = #{user_passwd},
+	      </if>
+	      <if test="login_time != null" >
+	        login_time = now(),
+	      </if>
+	      <if test="user_mobile != null" >
+	        user_mobile = #{user_mobile},
+	      </if>
+	    </set>
+	    where id = #{id,jdbcType=BIGINT}
+    </update>
+    <select id="countUserList" parameterType="java.util.Map" resultType="java.lang.Integer">
+    	 SELECT count(1) FROM
+	     t_user_info t
+	     left join sndb_6000000001.t_device_user t1
+	     on t1.user_id = t.id
+	     <include refid="sql_where" />
+    </select>   
+    
+    <select id="fetchNickNameAndImgByUserMobile" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+		select <include refid="sql_columns" /> from t_user_info where user_mobile = #{user_mobile}
+	</select>
+	
+	<!-- 查询user_id -->
+	<select id="fetchUserIdByUserName" resultType="java.lang.Long">
+		select id from t_user_info where user_name = #{user_name}
+	</select>
+	<select id="fetchUserIdByUserNickName" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+		select * from t_user_info where user_nickname = #{user_nickname}
+	</select>
+	<select id="fetchUserByInfoExits" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.UserInfo">
+		select * from t_user_info where user_email = #{user_email}
+	</select>
+	
+	 <delete id="delete" parameterType="java.lang.Long">
+        delete from t_user_info where id = #{id,jdbcType=BIGINT}
+    </delete>
+</mapper>

@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.yunwa.dao.RechargeWaterOrderMapper" >
+    <sql id="sql_columns">
+
+            id , 
+            app_key , 
+            company_id , 
+            order_id , 
+            user_id , 
+            user_token , 
+            device_id , 
+            product_id , 
+            volume , 
+            amount , 
+            expense_pay , 
+            expense_present , 
+            red_envelope_id , 
+            red_envelope_amount , 
+            create_time , 
+            update_time , 
+            status , 
+            send_status , 
+            send_time,
+            type,
+            volume_type, 
+            card_no
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.yunwa.dao.domain.RechargeWaterOrder" useGeneratedKeys="true" keyProperty="id">
+        insert into t_recharge_water_order
+          (
+            app_key , 
+            company_id , 
+            order_id , 
+            user_id , 
+            user_token , 
+            device_id , 
+            product_id , 
+            volume , 
+            amount , 
+            expense_pay , 
+            expense_present , 
+            red_envelope_id , 
+            red_envelope_amount , 
+            create_time , 
+            update_time , 
+            status , 
+            send_status , 
+            send_time,
+            type,
+            volume_type, 
+            card_no
+          )
+        values
+          (
+	    	    	#{app_key},
+	    	    	#{company_id},
+	    	    	#{order_id},
+	    	    	#{user_id},
+	    	    	#{user_token},
+	    	    	#{device_id},
+	    	    	#{product_id},
+	    	    	#{volume},
+	    	    	#{amount},
+	    	    	#{expense_pay},
+	    	    	#{expense_present},
+	    	    	#{red_envelope_id},
+	    	    	#{red_envelope_amount},
+	    	    	now(),
+	    	    	now(),
+	    	    	#{status},
+	    	    	#{send_status},
+	    	    	null,
+	    	    	#{type},
+	    	    	#{volume_type},
+	    	    	#{card_no}
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.RechargeWaterOrder">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_recharge_water_order t <include refid="sql_where" />
+			<if test="sort!=null">
+				ORDER BY ${sort.param}  ${sort.type} 
+			</if>
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_recharge_water_order t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.yunwa.dao.domain.RechargeWaterOrder">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_recharge_water_order t
+        where
+        t.id=#{id}
+    </select>
+
+    <select id="fetchByOrderid" parameterType="java.lang.String" resultType="com.scinan.iot.yunwa.dao.domain.RechargeWaterOrder">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_recharge_water_order t
+        where
+        t.order_id=#{order_id}
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_recharge_water_order t <include refid="sql_where" />
+    </select>
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_recharge_water_order where id=#{id}
+    </delete>
+
+    <update id="update" parameterType="com.scinan.iot.yunwa.dao.domain.RechargeWaterOrder">
+		update t_recharge_water_order
+	    <set >
+	    	update_time = now(),
+        	<if test="app_key != null" >
+    	    		app_key = #{app_key},
+		</if>
+        	<if test="company_id != null" >
+    	    		company_id = #{company_id},
+		</if>
+        	<if test="order_id != null" >
+    	    		order_id = #{order_id},
+		</if>
+        	<if test="user_id != null" >
+    	    		user_id = #{user_id},
+		</if>
+        	<if test="user_token != null" >
+    	    		user_token = #{user_token},
+		</if>
+        	<if test="device_id != null" >
+    	    		device_id = #{device_id},
+		</if>
+        	<if test="product_id != null" >
+    	    		product_id = #{product_id},
+		</if>
+        	<if test="volume != null" >
+    	    		volume = #{volume},
+		</if>
+        	<if test="amount != null" >
+    	    		amount = #{amount},
+		</if>
+        	<if test="expense_pay != null" >
+    	    		expense_pay = #{expense_pay},
+		</if>
+        	<if test="expense_present != null" >
+    	    		expense_present = #{expense_present},
+		</if>
+        	<if test="red_envelope_id != null" >
+    	    		red_envelope_id = #{red_envelope_id},
+		</if>
+        	<if test="red_envelope_amount != null" >
+    	    		red_envelope_amount = #{red_envelope_amount},
+		</if>
+        	<if test="create_time != null" >
+    	    		create_time = now(),
+		</if>
+        	<if test="status != null" >
+    	    		status = #{status},
+		</if>
+        	<if test="send_status != null" >
+    	    		send_status = #{send_status},
+		</if>
+        	<if test="send_time != null" >
+    	    		send_time = now(),
+		</if>
+        	<if test="card_no != null" >
+    	    		card_no =  #{card_no},
+		</if>
+    	    </set>
+	    where id=#{id}
+    </update>
+    <select id="fetchByRechargePage" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.RechargeWaterOrder">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" />  FROM t_recharge_water_order t where (1=1) and t.type=2 and t.volume_type=3
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="company_id != null">
+				AND t.company_id = #{company_id}
+			</if>
+			<if test="order_id != null">
+			AND t.order_id = #{order_id}
+		    </if>
+			<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+			</if>
+			<if test="user_path != null and user_path!='' ">
+				AND t.device_id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+			</if>
+			order by create_time desc limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_recharge_water_order t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    <select id="countRecharge" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_recharge_water_order t where (1=1) and t.type=2 and t.volume_type=3
+        <if test="device_id != null">
+				AND t.device_id = #{device_id}
+		</if>
+		<if test="company_id != null">
+				AND t.company_id = #{company_id}
+		</if>
+		<if test="order_id != null">
+			AND t.order_id = #{order_id}
+		</if>
+		<if test="start_time != null and end_time!=null ">
+			AND DATE_FORMAT(create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+		</if>
+		<if test="user_path != null and user_path!='' ">
+				AND t.device_id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+		</if>
+    </select>
+</mapper>

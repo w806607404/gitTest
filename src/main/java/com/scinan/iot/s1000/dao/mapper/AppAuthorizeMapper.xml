@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.AppAuthorizeMapper" >
+	<sql id="sql_columns">
+		access_token,app_key,user_id,authorize_flag,expires_in,update_time,create_time, imei
+	</sql>
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql> 
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.AppAuthorize">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_app_authorize t <include refid="sql_where" />
+			ORDER BY t.create_time DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_app_authorize t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    <select id="fetchById" parameterType="java.lang.String" resultType="com.scinan.iot.s1000.dao.domain.AppAuthorize">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_app_authorize t
+        where
+        t.access_token = #{access_token}
+    </select>
+    <delete id="delete" parameterType="java.lang.String">
+        delete from t_app_authorize where access_token=#{access_token}
+    </delete>
+</mapper>

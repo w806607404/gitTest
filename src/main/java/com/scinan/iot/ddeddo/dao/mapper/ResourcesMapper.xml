@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.ResourcesMapper" >
+    <!--  <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>-->
+	
+	<sql id="sql_columns">
+		res_id,res_name,icon,res_key,parent_id,res_type,res_url,description
+	</sql>
+	
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+    
+    
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.Resource">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_resources t <include refid="sql_where" />
+			<if test="sort!=null">
+				ORDER BY ${sort.param}  ${sort.type} 
+			</if>
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" />  FROM t_resources t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    
+    
+    <select id="fetchSimpleResuouces" resultType="com.scinan.iot.ddeddo.dao.domain.Resource">
+         SELECT <include refid="sql_columns" />  FROM t_resources t
+    </select>
+	 
+	 <delete id="delete" >
+    	delete from t_resources where res_id = #{res_id}
+    </delete>
+    
+    <select id="fetchSystemResourcesBySupperRole"  parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.Resource">
+		SELECT t1.res_id,t1.res_name,t1.icon,t1.parent_id,t1.res_key,t1.res_type,t1.res_url,t1.res_key,t1.description
+		from t_resources t1 where (1=1)
+		<if test="parent_id!=null">
+			and parent_id = #{parent_id}
+		</if>
+		order by res_id asc
+	</select>
+	
+	<select id="findUserRoleResources" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.Resource">
+		SELECT * from t_resources where res_id in
+		( 
+			select res_id from t_role_resources where role_id = #{role_id}
+		) and parent_id = #{parent_id} order by res_id ASC
+	</select>
+	
+	
+	 <select id="fetchSystemResourcesByRoleId"  parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.Resource">
+		SELECT
+			t1.res_id,t1.res_name,t1.icon,t1.res_key,t1.parent_id,t1.res_type,t1.res_url,t1.description
+		from
+			t_resources t1,
+			t_role_resources t2,
+			t_role t3
+		WHERE
+			t1.res_id = t2.res_id
+		AND t2.role_id = t3.id
+		<if test="role_id != null">
+			AND t2.role_id = #{role_id}
+		</if>
+	</select>
+	
+	
+	
+	
+    <!--  <select id="fetchSystemResourcesByRoleId"  parameterType="java.util.Map" resultType="com.scinan.iot.s9000.dao.domain.SystemResourcesBean">
+		SELECT
+			t1.id,t1.name,t1.name_en,t1.parent_id,t1.res_key,t1.res_type,t1.res_url,icon,t1.name_ext1,t1.res_key
+		from
+			t_system_resources t1,
+			t_role_res t2,
+			t_role t3
+		WHERE
+			t1.id = t2.res_id
+		AND t2.role_id = t3.id
+		<if test="role_id != null">
+			AND t2.role_id = #{role_id}
+		</if>
+		
+		<if test="filter != null">
+			and t1.id != 38 and t1.parent_id != 38 and t1.id != 48 and t1.parent_id != 48 and t1.id != 52 and t1.parent_id != 52
+		</if>
+		
+	</select>
+	
+	<select id="findUserRoleResources" parameterType="java.util.Map" resultType="com.scinan.iot.s9000.dao.domain.SystemResourcesBean">
+		SELECT * from t_system_resources where id in
+		( 
+			select res_id from t_role_res where role_id = #{role_id}
+		) and parent_id = #{parent_id} order by sort_num
+	</select>
+    
+    <select id="fetchResourcesUrlByRoleResBeans" resultType="java.lang.String">
+    	select res_url from t_system_resources where res_type != '0' and id in 
+    	<foreach collection="list" item="item" index="index"
+            open="(" close=")" separator=",">
+            #{item.res_id}
+        </foreach>
+    </select>
+    
+    
+    <select id="fetchAllUrl" resultType="java.lang.String">
+    	SELECT res_url from t_system_resources where res_type != '0'
+    </select>-->
+</mapper>

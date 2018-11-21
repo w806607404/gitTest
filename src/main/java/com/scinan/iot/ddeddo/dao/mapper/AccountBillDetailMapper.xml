@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.AccountBillDetailMapper" >
+	<!--  默认不使用缓存
+    <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>
+    -->
+    <sql id="sql_columns">
+            id , 
+           	sale_userId,
+			benefit_userId,
+			device_id,
+			amount,
+			product_price,
+			type,
+			create_time,
+			company_id
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountBillDetail" useGeneratedKeys="true" keyProperty="id">
+        insert into t_account_bill_detail
+          (
+             		sale_userId,
+					benefit_userId,
+					device_id,
+					amount,
+					product_price,
+					type,
+					create_time,
+					company_id
+          )
+        values
+          (
+    	    	#{sale_userId},
+	    	    #{benefit_userId},
+	    	    #{device_id}, #{amount},#{product_price},
+	    	    #{type},#{create_time},#{company_id}
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountBillDetail">
+     <choose>
+       <when test="device_id == null">
+			SELECT a.*,b.user_nickname sale_user_nickname,d.name sale_user_type ,b2.user_name benefit_user_name
+				,b2.user_nickname benefit_user_nickname,d2.name benefit_user_type,e.province_name sale_province_name,
+				e.city_name sale_city_name,e.district_name sale_district_name
+			from t_account_bill_detail a 
+			LEFT JOIN t_account_info b ON a.sale_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.benefit_userId=b2.id
+			LEFT JOIN t_role c ON c.id=b.role_id
+			LEFT JOIN t_role c2 ON c2.id=b2.role_id
+			LEFT JOIN t_role_type d ON d.id=c.role_type
+			LEFT JOIN t_role_type d2 ON d2.id=c2.role_type
+			LEFT JOIN t_account_sold e ON a.device_id=e.device_id
+			<include refid="sql_where" />
+			ORDER BY a.id DESC limit #{offset},#{limit}  
+       </when>
+         <otherwise>
+         select t1.* from (
+             SELECT a.*,b.user_nickname sale_user_nickname,d.name sale_user_type ,b2.user_name benefit_user_name
+				,b2.user_nickname benefit_user_nickname,d2.name benefit_user_type,e.province_name sale_province_name,
+				e.city_name sale_city_name,e.district_name sale_district_name
+			from t_account_bill_detail a 
+			LEFT JOIN t_account_info b ON a.sale_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.benefit_userId=b2.id
+			LEFT JOIN t_role c ON c.id=b.role_id
+			LEFT JOIN t_role c2 ON c2.id=b2.role_id
+			LEFT JOIN t_role_type d ON d.id=c.role_type
+			LEFT JOIN t_role_type d2 ON d2.id=c2.role_type
+			LEFT JOIN t_account_sold e ON a.device_id=e.device_id
+			<include refid="sql_where" />
+			) t1  where t1.device_id like '%${device_id}%'
+			ORDER BY t1.id DESC limit #{offset},#{limit} 
+        </otherwise>
+      </choose>         
+    </select>
+
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.ddeddo.dao.domain.AccountBillDetail">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_account_bill_detail t
+        where
+        t.id=#{id}
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+   <choose>
+       <when test="device_id == null">
+			SELECT count(1)	from t_account_bill_detail a 
+			<include refid="sql_where" />
+       </when>
+         <otherwise>
+         select count(1) from (
+             SELECT a.*,b.user_nickname sale_user_nickname,d.name sale_user_type ,b2.user_name benefit_user_name
+				,b2.user_nickname benefit_user_nickname,d2.name benefit_user_type,e.province_name sale_province_name,
+				e.city_name sale_city_name,e.district_name sale_district_name
+			from t_account_bill_detail a 
+			LEFT JOIN t_account_info b ON a.sale_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.benefit_userId=b2.id
+			LEFT JOIN t_role c ON c.id=b.role_id
+			LEFT JOIN t_role c2 ON c2.id=b2.role_id
+			LEFT JOIN t_role_type d ON d.id=c.role_type
+			LEFT JOIN t_role_type d2 ON d2.id=c2.role_type
+			LEFT JOIN t_account_sold e ON a.device_id=e.device_id
+			<include refid="sql_where" />
+			) t1  where t1.device_id like '%${device_id}%'
+        </otherwise>
+      </choose>       
+    </select>
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_account_bill_detail where id=#{id}
+    </delete>
+    
+     <delete id="deleteByUser_id" parameterType="java.lang.Long">
+        delete from t_account_bill_detail where benefit_userId=#{user_id} or sale_userId = #{user_id}
+    </delete> 
+
+    <update id="update" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountBillDetail">
+		update t_account_bill_detail
+	    <set >
+        	<if test="sale_userId != null" >
+    	    		sale_userId = #{sale_userId},
+		    </if>
+        	<if test="benefit_userId != null" >
+    	    		benefit_userId = #{benefit_userId},
+		    </if>
+		    <if test="device_id != null" >
+    	    		device_id = #{device_id},
+		    </if>
+        	<if test="amount != null" >
+    	    		amount = #{amount},
+		    </if>
+		    <if test="product_price != null" >
+    	    		product_price = #{product_price},
+		    </if>
+		    <if test="type != null" >
+    	    		type = #{type},
+		    </if>
+        	<if test="create_time != null" >
+    	    		create_time = #{create_time},
+		    </if>
+		     <if test="company_id != null" >
+    	    		company_id = #{company_id},
+		    </if>
+    	    </set>
+	    where id=#{id}
+    </update>
+
+</mapper>

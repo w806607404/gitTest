@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.DeviceBelongMapper" >
+    <!--  <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>-->
+	
+	<sql id="sql_columns">
+		id,
+		device_id,
+		user_id,
+		parent_id,
+		create_time,
+		device_level,
+		company_id
+	</sql>
+	
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+    
+    <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.DeviceBelong">
+        insert into t_device_belong
+        (
+            device_id,
+			user_id,
+			parent_id,
+			create_time,
+			device_level,
+			company_id
+        )
+        values
+        (
+        #{device_id},
+        #{user_id},
+        #{parent_id},
+        #{create_time},
+        #{device_level},
+        #{company_id}
+        )
+    </insert>
+    <insert id="batchSave">
+        insert into t_device_belong
+          (
+            device_id,
+			user_id,
+			parent_id,
+			create_time,
+			device_level,
+			company_id
+          )
+        values
+	  	<foreach collection="list" item="item" index="index"
+	  		separator=",">
+	          (
+	          #{item.device_id}, #{item.user_id},#{item.parent_id}, #{item.create_time}, #{item.device_level}, #{item.company_id}
+	          )
+	  	</foreach>
+    </insert>
+    <delete id="batchDel"  parameterType="java.lang.Long">
+        delete from t_device_belong where  id in (
+		  	<foreach collection="list" item="item" index="index"
+		  		separator=",">
+		           #{item.id}
+		  	</foreach>
+		  	)
+    </delete>
+    
+     <delete id="delete" parameterType="java.lang.Long">
+        delete from t_device_belong where id=#{id}
+    </delete>
+    
+     <delete id="deleteByUser_id" parameterType="java.lang.Long">
+        delete from t_device_belong where user_id=#{user_id}
+    </delete> 
+    <!-- 获取所有设备 -->
+	<select id="fetchDistributionOfDeviceByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.DeviceBelong">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns"></include>
+			from t_device_belong t where (1=1)
+			<if test="company_id != null">
+				AND t.company_id=#{company_id}
+			</if>
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="device_level != null">
+				AND t.device_level = #{device_level}
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+			ORDER BY id DESC
+			limit #{offset},#{limit}  
+       </when>
+      </choose>         
+    </select>
+    <select id="fecthDeviceBelongList" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.DeviceBelong">
+      		  SELECT <include refid="sql_columns"></include>
+			  from t_device_belong t where (1=1)
+			 <if test="company_id != null">
+				AND t.company_id=#{company_id}
+			</if>
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+      		  SELECT COUNT(1)
+			  from t_device_belong t where (1=1)
+			<if test="user_id != null">
+				AND t.user_id = #{user_id} or t.parent_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+    </select>
+    
+    <select id="countSelf" parameterType="java.util.Map" resultType="java.lang.Integer">
+      		  SELECT COUNT(1)
+			  from t_device_belong t where (1=1)
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+    </select>
+    
+    <!-- 日绑定量 -->
+    <select id="countDay" parameterType="java.util.Map" resultType="java.lang.Integer">
+      		  SELECT COUNT(1)
+			  from t_device_belong t where (1=1)
+			 <if test="company_id != null">
+				AND t.company_id=#{company_id}
+			</if>
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+			and DATE_FORMAT(t.create_time,'%Y-%m-%d') = DATE_FORMAT(SYSDATE(),'%Y-%m-%d')
+    </select>
+    
+    <!-- 日绑定量 -->
+    <select id="countMouth" parameterType="java.util.Map" resultType="java.lang.Integer">
+      		  SELECT COUNT(1)
+			  from t_device_belong t where (1=1)
+			 <if test="company_id != null">
+				AND t.company_id=#{company_id}
+			</if>
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+			and DATE_FORMAT(t.create_time,'%Y-%m') = DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 1 MONTH),'%Y-%m')
+    </select>
+    
+    <!-- 设备激活量 -->
+    <select id="countJoinByUserId" parameterType="java.lang.Long" resultType="java.lang.Integer">
+	select count(1) from (select device_id from t_device_belong where user_id = #{user_id}) t1 left join SNDB_6000000001.t_device_info t2 on t1.device_id = t2.id where t2._join =1
+    </select>
+    <!-- 设备日激活量 -->
+    <select id="countJoinDay" parameterType="java.lang.Long" resultType="java.lang.Integer">
+	select count(1) from (select device_id from t_device_belong where user_id = #{user_id}) t1 left join SNDB_6000000001.t_device_info t2 on t1.device_id = t2.id where t2._join =1
+	 and DATE_FORMAT(t2.join_time,'%Y-%m-%d') = DATE_FORMAT(SYSDATE(),'%Y-%m-%d');
+    </select>
+    <!-- 厂商为下级代理商分配设备信息 结束  by date:2017-08-14 -->
+     <select id="fetchById" resultType="com.scinan.iot.ddeddo.dao.domain.DeviceBelong">
+         SELECT <include refid="sql_columns" />  FROM t_device_belong t where id=#{id}
+    </select>
+    <select id="fetchDeviceByList" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.DeviceBelong">
+    SELECT <include refid="sql_columns"></include>
+			from t_device_belong t where (1=1)
+			<if test="company_id != null">
+				AND t.company_id=#{company_id}
+			</if>
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="parent_id != null">
+				AND t.parent_id = #{parent_id}
+			</if>
+			ORDER BY id DESC   
+    </select>
+    
+    <!-- Web端设备分配记录 -->
+    <select id="fetchByDeviceBelongPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.DeviceBelongBean">
+	<choose>
+       <when test="province_id == null">
+		  SELECT <include refid="sql_columns"></include>
+			from t_device_belong t where (1=1)
+			<if test="device_id != null">
+				AND t.device_id like '%${device_id}%' 
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id} or t.parent_id = #{user_id}
+			</if>
+			<if test="company_id != null">
+				AND t.company_id = #{company_id} 
+			</if>
+			<if test="device_id != null">
+				AND t.device_id like '%${device_id}%' 
+			</if>
+			ORDER BY t.id DESC  limit #{offset},#{limit} 
+       </when>
+       <otherwise>
+       		SELECT t1.* from (
+	       		 SELECT <include refid="sql_columns"></include>
+				from t_device_belong t where (1=1)
+				<if test="device_id != null">
+					AND t.device_id like '%${device_id}%' 
+				</if>
+				<if test="user_id != null">
+					AND t.user_id = #{user_id} or t.parent_id = #{user_id}
+				</if>
+				<if test="company_id != null">
+					AND t.company_id = #{company_id} 
+				</if>
+				<if test="device_id != null">
+					AND t.device_id like '%${device_id}%' 
+				</if>
+       		) t1 left join t_account_info t2 on t1.user_id = t2.id where (1=1)
+       		   <if test="province_id!=null">
+					 and t2.province_id = #{province_id}
+			   </if>
+			    <if test="city_id!=null">
+					 and t2.city_id = #{city_id}
+			   </if>
+			    <if test="district_id!=null">
+					 and t2.district_id = #{district_id}
+			   </if>
+		 ORDER BY t1.id DESC  limit #{offset},#{limit} 
+       </otherwise>
+      </choose>         
+    </select>
+    
+        <select id="countPage" parameterType="java.util.Map" resultType="java.lang.Integer">
+      		<choose>
+       <when test="province_id == null">
+		  SELECT count(1)
+			from t_device_belong t where (1=1)
+			<if test="device_id != null">
+				AND t.device_id like '%${device_id}%'
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id} or t.parent_id = #{user_id}
+			</if>
+			<if test="company_id != null">
+				AND t.company_id = #{company_id} 
+			</if>
+			<if test="device_id != null">
+				AND t.device_id like '%${device_id}%' 
+			</if>
+       </when>
+       <otherwise>
+       		SELECT count(1) from (
+	       		 SELECT t.id,t.user_id
+				from t_device_belong t where (1=1)
+					<if test="device_id != null">
+						AND t.device_id like '%${device_id}%' 
+					</if>
+				<if test="user_id != null">
+					AND t.user_id = #{user_id} or t.parent_id = #{user_id}
+				</if>
+				<if test="company_id != null">
+					AND t.company_id = #{company_id} 
+				</if>
+				<if test="device_id != null">
+					AND t.device_id like '%${device_id}%' 
+				</if>
+       		) t1 left join t_account_info t2 on t1.user_id = t2.id where (1=1)
+       		   <if test="province_id!=null">
+					 and t2.province_id = #{province_id}
+			   </if>
+			    <if test="city_id!=null">
+					 and t2.city_id = #{city_id}
+			   </if>
+			    <if test="district_id!=null">
+					 and t2.district_id = #{district_id}
+			   </if>
+       </otherwise>
+      </choose> 
+    </select>
+    
+    <select id="fetchByDevice" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.DeviceBelong">
+      		  SELECT <include refid="sql_columns"/>
+			  from t_device_belong t where (1=1)
+			 <if test="company_id != null">
+				AND t.company_id=#{company_id}
+			</if>
+			<if test="device_id != null">
+				AND t.device_id = #{device_id}
+			</if>
+			<if test="user_id != null">
+				AND t.user_id = #{user_id}
+			</if>
+			<if test="device_level != null">
+				AND t.device_level = #{device_level}
+			</if>
+			limit 1
+    </select>
+</mapper>

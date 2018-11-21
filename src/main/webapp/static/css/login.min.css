@@ -1,0 +1,207 @@
+.margin0{
+	margin:0;
+	padding:0;
+}
+body{
+	background:url(../img/indexbg.jpg) no-repeat fixed center center / cover;
+	background-attachment: fixed;
+	margin:0px;
+	padding:0px;
+}
+#login-warning{
+	position:absolute;
+	z-index:2016;
+    width:24%;
+    height:auto;
+    padding-bottom:2%;
+    top:31%;
+    left:38%;
+    background: rgba(255,255,255,.3);
+	-moz-box-shadow: 0 0 5px rgba(255,255,255,.3);
+	-webkit-box-shadow: 0 0 5px rgba(255,255,255,.3);
+	box-shadow: 0 0 5px rgba(255,255,255,.5);
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+/*     background: -webkit-radial-gradient(rgba(255,255,255,.7), rgba(255,255,255,.0) 60%);  */
+/*     background: -o-radial-gradient(rgba(255,255,255,.7),rgba(255,255,255,.0) 60%);  */
+/*     background: -moz-radial-gradient(rgba(255,255,255,.7), rgba(255,255,255,.0) 60%);  */
+/*     background: radial-gradient(rgba(255,255,255,.7), rgba(255,255,255,.0) 60%); */
+}
+#warning-text>p{
+	text-indent:2em;
+	position:relative;
+	margin-top:12%;
+	width:80%;
+	left:10%;
+	color:rgba(255,255,255,.7);
+	word-break:break-all;
+}
+@media screen and (width:768px){
+	#login-warning{
+	    width:60%;
+	    left:20%;
+	    top:32%;
+	    padding-bottom:12%;
+	}
+	#warning-text>p{
+		margin-top:20%;
+		width:70%;
+		left:15%;
+	}
+}@media screen and (max-width:767px){
+	#login-warning{
+	    width:80%;
+	    left:10%;
+	    top:30%
+	}
+	#warning-text>p{
+		margin-top:10%;
+	}
+}#login-warning-confirm{
+	position:relative;
+	top:73%;
+	width:100px;
+	left:50%;
+	margin-left:-50px;
+}
+.login-page{
+/* 	background-color:#394D60; */
+/* 	background:url(../img/indexbg.jpg) no-repeat fixed center center / cover; */
+	height:100%;
+}
+.language_a{
+	position:relative;
+	left:10px;
+	top:5px;
+	color:#fff;
+}
+.language_a a{
+	color:#fff;
+}
+.signinpanel {
+	width: 350px;
+	margin: 10% auto 0;
+}
+.signinpanel p{
+	color:rgba(255,255,255,.9);
+	text-align:center;
+	font-size:18px;
+	font-weight:500;
+}
+.signinpanel .form-control {
+	display: block;
+	margin-top: 15px
+}
+
+.signinpanel .uname {
+	background: #fff url(../img/user.png)/*tpa=http://www.zi-han.net/theme/hplus/img/user.png*/ no-repeat 95% center;
+	color: #333
+}
+
+.signinpanel .pword {
+	background: #fff url(../img/locked.png)/*tpa=http://www.zi-han.net/theme/hplus/img/locked.png*/ no-repeat 95% center;
+	color: #333
+}
+
+.signinpanel .btn {
+	margin-top: 15px
+}
+
+.signinpanel form {
+	background: rgba(255,255,255,.3);
+/* 	border: 1px solid rgba(255,255,255,.3); */
+	-moz-box-shadow: 0 0 5px rgba(255,255,255,.3);
+	-webkit-box-shadow: 0 0 5px rgba(255,255,255,.3);
+	box-shadow: 0 0 5px rgba(255,255,255,.5);
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+	padding: 20px 50px 30px 50px;
+}
+.signinpanel form>input{
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;
+}
+#verifycode{
+	display:inline-block;
+	width:45%;
+	height:32px;
+	float:left;
+	margin:0 0 10px 0;
+	color:#000;
+}
+#codeImg{
+	display:inline-block;
+	float:right;
+	height:32px;
+}
+
+@media screen and (width:768px){
+	.signinpanel,.signuppanel {
+	    width: 370px;
+		margin: 0 auto;
+		padding: 20px;
+		margin-top:30%;
+	}
+
+	.signinpanel form {
+		margin-top: 60px;
+		width:100%;
+		padding:30px;
+	}
+	
+	.signinpanel form input{
+		text-align:center;
+	}
+
+	.signuppanel .form-control {
+		margin-bottom: 10px
+	}
+	.signin-info{
+		margin-top:55px;
+		margin-left:5%;
+	}
+	.language_a{
+		position:relative;
+		top:95%;
+		text-align:center;
+		margin:0;
+	}
+}@media screen and (max-width:767px) {
+	.signinpanel,.signuppanel {
+		margin: 0 auto;
+		width: 80%;
+		padding: 10px;
+	}
+
+	.signinpanel form {
+		margin-top: 110px;
+		width:100%;
+		padding:10%;
+	}
+	
+	.signinpanel form input{
+		text-align:center;
+	}
+	.signuppanel .form-control {
+		margin-bottom: 10px;
+	}
+	.language_a{
+		position:relative;
+		top:95%;
+		text-align:center;
+		margin:0;
+	} 
+}@media screen and (max-width:345px) {
+	.signinpanel,.signuppanel {
+		margin: 0 auto;
+		width: 85%;
+		padding: 20px
+	}
+	.signinpanel form {
+		margin-top: 40px;
+		padding:15px;
+	}
+}

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s8000log.dao.DeviceStartTimeLogMapper" >
+    <sql id="sql_columns">
+            id , 
+            device_id , 
+            start_time , 
+            close_time , 
+            online_time , 
+            company_id,
+            type,
+            create_time
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    
+     <select id="fetchById" resultType="com.scinan.iot.s8000log.dao.domain.DeviceStartTimeLog">
+    	select <include refid="sql_columns" /> from t_device_start_time_log where id = #{id}
+    </select>
+    
+    <insert id="save" parameterType="com.scinan.iot.s8000log.dao.domain.DeviceStartTimeLog" useGeneratedKeys="true" keyProperty="id">
+        insert into t_device_start_time_log
+          (
+          <include refid="sql_columns" />
+          )
+        values
+          (
+    		#{id},
+  	    	#{device_id},
+  	    	#{start_time},
+  	    	#{close_time},
+  	    	#{online_time},
+  	    	#{company_id},
+  	    	#{type},
+  	    	now()
+          )
+    </insert>
+    
+
+    <update id="update" parameterType="com.scinan.iot.s8000log.dao.domain.DeviceStartTimeLog">
+		update t_device_start_time_log
+        <set >
+            <if test="start_time != null" >
+                start_time = #{start_time},
+            </if>
+            <if test="close_time != null" >
+   	    		close_time = #{close_time},
+            </if>
+            <if test="online_time != null" >
+   	    		online_time = #{online_time},
+            </if>
+   	    </set>
+	    where id = #{id}
+    </update>
+
+    <select id="countByMouth" parameterType="java.util.Map" resultType="java.lang.Integer">
+        select count(1) from t_device_start_time_log t1 where 1=1
+        <if test="company_id != null">
+            and company_id = #{company_id}
+        </if>
+        <if test="device_id != null">
+            and device_id = #{device_id}
+        </if>
+        and DATE_FORMAT(create_time,'%Y-%m') = DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 1 MONTH),'%Y-%m')
+    </select>
+</mapper>

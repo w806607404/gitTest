@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s9000.dao.CityMapper" >
+     <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>
+	
+	<sql id="sql_columns">
+		id,province_code,city_code,name_cn
+	</sql>
+	
+	 
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+    
+	<select id="fetchByCityList" parameterType="java.lang.String"  resultType="com.scinan.iot.s9000.dao.domain.CityBean">
+	   SELECT city_code,name_cn FROM t_city where province_code = #{province_code}
+	</select>
+	<select id="fetchByCityOfName" parameterType="java.lang.String"  resultType="com.scinan.iot.s9000.dao.domain.CityBean">
+	   SELECT city_code,name_cn FROM t_city where city_code = #{city_code}
+	</select>
+	<select id="fetchByCityOfList"  resultType="com.scinan.iot.s9000.dao.domain.CityBean">
+	   SELECT city_code,name_cn FROM t_city
+	</select>
+</mapper>

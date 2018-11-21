@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.production.dao.OrderItemMapper" >
+
+		<sql id="sql_columns">
+		    id,order_id,mac,serialno,password,bar_code,device_id
+		</sql>
+		
+		
+		<sql id="sql_where">
+			    <if test="conds!=null">
+			        <trim prefix="WHERE" prefixOverrides="AND|OR">
+			            <foreach collection="conds.conds" index="index" item="cond">
+			                ${cond.linkType}
+			                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+			                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+			                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+			                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+			                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+			                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+			                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+			                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+			                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+			                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+			                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+			                        #{item}
+			                    </foreach>                                       
+			                </if>
+			            </foreach>
+			        </trim>
+			    </if>
+			</sql>
+			
+			<!-- 根据主键id去查询一条记录 -->
+			<select id="fetchById" resultType="com.scinan.iot.production.dao.domain.OrderItemBean">
+			    SELECT <include refid="sql_columns"/> FROM res_order_item where id = #{id}
+			</select>
+			
+			<select id="fetchByBarCode" parameterType="java.util.Map" resultType="com.scinan.iot.production.dao.domain.OrderItemBean">
+			    SELECT <include refid="sql_columns"/> FROM res_order_item where bar_code = #{bar_code} limit 1
+			</select>
+			
+			<select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.production.dao.domain.OrderItemBean">
+			    <choose>
+			      <when test="limit>0">
+			        select t1.mac,t1.password,t1.serialno,t2.create_time,
+					t3.material_sn,t3.version_code,t4.code,t5.name,t3.factory_id
+					from res_order_item t1 
+					left join res_order t2 
+					on t1.order_id = t2.id
+					left join bas_material t3
+					on t2.material_id = t3.id
+					left join bas_chip t4
+					on t3.chip_id = t4.id
+					left join SNDB_S1000.t_factory_manage t5
+					on t3.factory_id = t5.id
+<!-- 					where t1.order_id = ${orderId} -->
+<!-- 					<if test="password != null and password != null"> -->
+<!-- 						and t1.password like '%${password}%' -->
+<!-- 					</if> -->
+			        
+					<include refid="sql_where"/>
+			        limit #{offset},#{limit}
+			      </when>
+			      <otherwise>
+                  select t1.mac,t1.password,t1.serialno,t2.create_time,
+					t3.material_sn,t3.version_code,t4.code,t5.name,t3.factory_id
+					from res_order_item t1 
+					left join res_order t2 
+					on t1.order_id = t2.id
+					left join bas_material t3
+					on t2.material_id = t3.id
+					left join bas_chip t4
+					on t3.chip_id = t4.id
+					left join SNDB_S1000.t_factory_manage t5
+					on t3.factory_id = t5.id
+<!-- 					where t1.order_id = ${orderId} -->
+<!-- 					<if test="password != null and password != null"> -->
+<!-- 						and t1.password like '%${password}%' -->
+<!-- 					</if> -->
+					<include refid="sql_where"/>
+                  </otherwise>
+			    </choose>
+			</select>
+			
+			<select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+			   		select count(1)
+					from res_order_item t1 
+					left join res_order t2 
+					on t1.order_id = t2.id
+					left join bas_material t3
+					on t2.material_id = t3.id
+					left join bas_chip t4
+					on t3.chip_id = t4.id
+					left join SNDB_S1000.t_factory_manage t5
+					on t3.factory_id = t5.id
+			   <include refid="sql_where" />
+			</select>
+			
+			<delete id="deleteIDs" parameterType="java.util.List">
+		    	delete from res_order_item where id in 
+		    	<foreach collection="list" item="item" index="index"
+		            open="(" close=")" separator=",">
+		            #{item}
+	            </foreach>
+            </delete>
+            
+            <insert id="batchSave" parameterType="java.util.ArrayList">
+            	insert into res_order_item
+		          (
+		          <include refid="sql_columns" />
+		          )
+		          values
+		        <foreach collection="list" item="item" index="index" separator="," >  
+			        (#{item.id},#{item.order_id},#{item.mac},#{item.serialno},#{item.password},#{item.bar_code},#{item.device_id})  
+			    </foreach>  
+            </insert>
+            
+            
+            <select id="countOrderItemNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+               SELECT COUNT(1)  FROM res_order_item t,res_order r where (1=1) and t.order_id=r.id and r.state=2
+               <if test="mac != null" >
+		    	    and	mac = #{mac}
+			   </if>
+            </select>
+		    <select id="fetchByResOrderItemPage" parameterType="java.util.Map" resultType="com.scinan.iot.production.dao.domain.OrderItemBean">
+		       SELECT t.id,t.order_id,t.mac,t.serialno,t.password,t.bar_code,t.device_id FROM res_order_item t,res_order r where (1=1) and t.order_id = r.id and r.state = 2
+		            <if test="mac != null" >
+		    	    	and	t.mac = #{mac}
+				    </if>
+					ORDER BY t.id DESC 
+					limit #{offset},#{limit}      
+		    </select>
+</mapper>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s9000.dao.DeviceOnceOnlineMapper" >
+    <!--  <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>-->
+	
+	<sql id="sql_columns">
+		id,device_id,online_time,offline_time,diff_time,company_id,type,begin_hour,end_hour,create_time,reason
+	</sql>
+	 
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+    
+	<select id="countDevicesConnectionByMap" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select count(1) from t_device_once_online t1 where 1=1 
+		<if test="company_id != null">
+			and company_id = #{company_id}
+		</if>
+		<if test="device_type != null">
+			and type = #{device_type}
+		</if>
+		<if test="create_time != null">
+			and DATE_FORMAT(create_time,'%Y-%m-%d') &gt;= #{create_time}
+		</if>
+	</select>
+	
+	<select id="fetchById" resultType="com.scinan.iot.s9000.dao.domain.DeviceOnceOnlineBean">
+	   SELECT <include refid="sql_columns"/> FROM t_device_once_online where id = #{id}
+	</select>
+	
+	<select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s9000.dao.domain.DeviceOnceOnlineBean">
+	<choose>
+	  <when test="limit > 0">
+	   SELECT <include refid="sql_columns"/> FROM t_device_once_online t where (1=1)
+	   <if test="company_id != null">
+			and company_id = #{company_id}
+		</if>
+		<if test="device_id != null">
+			and device_id like '%${device_id}'
+		</if>
+		<if test="reason != null">
+			and reason = #{reason}
+		</if>
+		<if test="date != null">
+			and DATE_FORMAT(create_time,'%Y-%m-%d') = #{date}
+		</if>
+	   <if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+		and t.company_id in 
+	   	<foreach collection="roleCompanyBeans" item="item" index="index" open="(" close=")" separator=",">
+           #{item.company_id}
+        </foreach>
+	   </if>
+	   Order BY id DESC
+	   limit #{offset},#{limit}
+	   </when>
+	   <otherwise>
+	   SELECT <include refid="sql_columns"/> FROM t_device_once_online t <include refid="sql_where"/>
+	   Order BY id DESC
+	   </otherwise>
+	  </choose>
+	</select>
+	
+	<select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+	   SELECT COUNT(1) FROM t_device_once_online t where (1=1)
+	   <if test="company_id != null">
+			and company_id = #{company_id}
+		</if>
+		<if test="device_id != null">
+			and device_id like '%${device_id}'
+		</if>
+		<if test="reason != null">
+			and reason = #{reason}
+		</if>
+		<if test="date != null">
+			and DATE_FORMAT(create_time,'%Y-%m-%d') = #{date}
+		</if>
+	   <if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+		and t.company_id in 
+	   	<foreach collection="roleCompanyBeans" item="item" index="index" open="(" close=")" separator=",">
+           #{item.company_id}
+        </foreach>
+	    </if>
+	</select>
+	
+	<select id="fetchCompany" resultType="com.scinan.iot.s9000.dao.domain.DeviceOnceOnlineBean">
+	   SELECT
+	     distinct t.company_id,t1.name
+	   FROM
+	     t_device_once_online t
+	     left join SNDB_S1000.t_factory_manage t1
+	     on t.company_id = t1.id
+	</select>
+	
+	
+	<select id="fetchByCompanyList" parameterType="java.util.Map" resultType="com.scinan.iot.s9000.dao.domain.DeviceOnceOnlineBean">
+	   SELECT
+	     distinct t.company_id,t1.name
+	   FROM
+	     t_device_once_online t
+	     left join SNDB_S1000.t_factory_manage t1
+	     on t.company_id = t1.id
+	    <if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+		and t.company_id in 
+	   	<foreach collection="roleCompanyBeans" item="item" index="index" open="(" close=")" separator=",">
+           #{item.company_id}
+        </foreach>
+	    </if>
+	    <if test="company_id != null and company_id != ''">
+		   and t.company_id = #{company_id}
+	    </if>
+	</select>
+	
+	
+	<select id="fetchDeviceOnlineHistoryByPage"  parameterType="java.util.Map" resultType="com.scinan.iot.s9000.dao.domain.DeviceOnceOnlineBean">
+	select t1.device_id,t1.online_time,t1.offline_time,t1.diff_time,t1.reason
+	from t_device_once_online t1 
+	where  1 = 1 
+	and t1.device_id = #{device_id} 
+	<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+		and t1.company_id in 
+	   	<foreach collection="roleCompanyBeans" item="item" index="index" open="(" close=")" separator=",">
+           #{item.company_id}
+        </foreach>
+	</if>
+	order by t1.id desc
+	limit #{offset},#{limit}
+	</select>
+	
+	<select id="fetchDeviceOnlineHistoryCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+	   select COUNT(1)
+		from t_device_once_online t1 
+		where  1 = 1 
+		and t1.device_id = #{device_id} 
+		<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and t1.company_id in 
+		   	<foreach collection="roleCompanyBeans" item="item" index="index" open="(" close=")" separator=",">
+	           #{item.company_id}
+	        </foreach>
+		</if>
+	</select>
+	<select id="fetchDeviceOnlineHistoryByList"  parameterType="java.util.Map" resultType="com.scinan.iot.s9000.dao.domain.DeviceOnceOnlineBean">
+		select t1.device_id,t1.online_time,t1.offline_time,t1.diff_time,t1.reason
+		from t_device_once_online t1 
+		where  1 = 1 
+		and t1.device_id = #{device_id} and  DATE_FORMAT(create_time,'%Y-%m-%d')  between #{start_time} and #{end_time}
+		order by t1.id desc
+	</select>
+	
+	<select id="countByMouth" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select count(1) from t_device_once_online t1 where 1=1 
+		<if test="company_id != null">
+			and company_id = #{company_id}
+		</if>
+		<if test="device_id != null">
+			and device_id = #{device_id}
+		</if>
+			and DATE_FORMAT(create_time,'%Y-%m') = DATE_FORMAT(DATE_SUB(curdate(), INTERVAL 1 MONTH),'%Y-%m') 
+	</select>
+	
+</mapper>

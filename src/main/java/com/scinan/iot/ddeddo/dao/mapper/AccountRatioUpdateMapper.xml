@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.AccountRatioUpdateMapper" >
+	<!--  默认不使用缓存
+    <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>
+    -->
+    <sql id="sql_columns">
+            id , 
+           	device_type_id,
+			product_price,
+			product_price_new,
+			agent_ratio,
+			agent_ratio_new,
+			dealer_ratio,
+			dealer_ratio_new,
+			primage_ratio,
+			primage_ratio_new,
+			company_id,
+			create_time
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountRatioUpdate" useGeneratedKeys="true" keyProperty="id">
+        insert into t_account_ratio_update
+          (
+             	device_type_id,
+				product_price,
+				product_price_new,
+				agent_ratio,
+				agent_ratio_new,
+				dealer_ratio,
+				dealer_ratio_new,
+				primage_ratio,
+				primage_ratio_new,
+				company_id,
+				create_time
+          )
+        values
+          (
+    	    	#{device_type_id},
+	    	    #{product_price},
+	    	    #{product_price_new}, #{agent_ratio},#{agent_ratio_new},#{dealer_ratio},#{dealer_ratio_new},
+	    	    #{primage_ratio},#{primage_ratio_new},
+	    	    #{company_id},#{create_time}
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountRatioUpdate">
+    <choose>
+       <when test="device_name != null">
+			SELECT t2.* from
+			(select <include refid="sql_columns" />,(select device_name from SNDB_6000000001.t_device_type t1 where t1.id = t.device_type_id)device_name FROM t_account_ratio_update t) t2
+			where t2.device_name like '%${device_name}%'
+			ORDER BY t2.create_time desc limit #{offset},#{limit}  
+       </when>
+       <otherwise>
+      	 SELECT <include refid="sql_columns" />,(select device_name from SNDB_6000000001.t_device_type t1 where t1.id = t.device_type_id)device_name FROM t_account_ratio_update t 
+		 ORDER BY t.create_time desc limit #{offset},#{limit}    
+       </otherwise>
+      </choose>          
+    </select>
+
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.ddeddo.dao.domain.AccountRatioUpdate">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_account_ratio_update t
+        where
+        t.id=#{id}
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+       <choose>
+			<when test="device_name != null">
+				SELECT COUNT(1) from 
+				(select (select device_name from SNDB_6000000001.t_device_type t1 where t1.id = t.device_type_id)device_name FROM t_account_ratio_update t <include refid="sql_where" />) t1
+				 where t1.device_name like '%${device_name}%'
+			</when>
+			<otherwise>
+	        SELECT COUNT(1)  FROM t_account_ratio_update t <include refid="sql_where" />
+			</otherwise>
+        </choose>
+    </select>
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_account_ratio_update where id=#{id}
+    </delete>
+
+    <update id="update" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountRatioUpdate">
+		update t_account_ratio_update
+	    <set >
+        	<if test="product_price != null" >
+    	    		product_price = #{product_price},
+		    </if>
+		    <if test="product_price_new != null" >
+    	    		product_price_new = #{product_price_new},
+		    </if>
+        	<if test="agent_ratio != null" >
+    	    		agent_ratio = #{agent_ratio},
+		    </if>
+		    <if test="agent_ratio_new != null" >
+    	    		agent_ratio_new = #{agent_ratio_new},
+		    </if>
+		    <if test="dealer_ratio != null" >
+    	    		dealer_ratio = #{dealer_ratio},
+		    </if>
+		    <if test="dealer_ratio_new != null" >
+    	    		dealer_ratio_new = #{dealer_ratio_new},
+		    </if>
+        	<if test="primage_ratio != null" >
+    	    		primage_ratio = #{primage_ratio},
+		    </if>
+		    <if test="primage_ratio_new != null" >
+    	    		primage_ratio_new = #{primage_ratio_new},
+		    </if>
+		     <if test="company_id != null" >
+    	    		company_id = #{company_id},
+		    </if>
+    	    </set>
+	    where id=#{id}
+    </update>
+
+</mapper>

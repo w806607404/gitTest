@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.FactoryMapper" >
+	<sql id="sql_columns">
+		id,name,code,order_item_sn,industry_id,update_time
+	</sql>
+	 
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+	
+	<!-- 根据主键id去查询一条记录 -->
+    <select id="fetchById" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+    	SELECT <include refid="sql_columns" />  FROM t_factory_manage where id = #{id}
+    </select>
+    <select id="fetchByCompanyOfName" parameterType="java.lang.String" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+    	SELECT name  FROM t_factory_manage where id = #{id} limit 1
+    </select>
+    
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_factory_manage t
+			<include refid="sql_where" />
+			order by id desc
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" />  FROM t_factory_manage t <include refid="sql_where" /> order by id desc
+        </otherwise>
+      </choose>         
+    </select>
+    <select id="findFactoryManagePage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+		select t1.id,t1.code,t1.name,t2.industry_name from t_factory_manage t1 
+		left join SNDB_S9000.t_industry_distribution t2
+		on t1.industry_id = t2.id
+		where name is not null and name != ''
+		<if test="name != null and name != ''">
+			and t1.name like '%${name}%'
+		</if>
+		<if test="code != null and code != ''">
+			and t1.code like '%${code}%'
+		</if>
+		<if test="id != null and id != ''">
+			and t1.id = #{id}
+		</if>
+		<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and t1.id in 
+	    	<foreach collection="roleCompanyBeans" item="item" index="index"
+	            open="(" close=")" separator=",">
+	            #{item.company_id}
+	        </foreach>
+		</if>
+		order by t1.id desc
+	</select>
+	 <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_factory_manage t <include refid="sql_where" />
+    </select>  
+    
+    <select id="fetchByIdAndFactoryName"  resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+        SELECT <include refid="sql_columns" />  FROM t_factory_manage t where (name = #{name} or code = #{code})
+        <if test="id != null and id != ''">
+        	and id != #{id}
+        </if>
+    </select> 
+     
+    <insert id="save" parameterType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+        insert into t_factory_manage
+          (
+          <include refid="sql_columns" />
+          )
+        values
+          (
+          #{id},
+		  #{name},
+ 		  #{code},
+ 		  '0000001',
+ 		  #{industry_id},
+ 		  now()
+          )
+    </insert> 
+     <update id="update" parameterType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+		update t_factory_manage
+	    <set> 	      
+	      <if test="name != null and name != ''">
+	        name = #{name},
+	      </if>	      	      
+	      <if test="code != null and code != ''">
+	        code = #{code},
+	      </if>
+	      <if test="order_item_sn != null and order_item_sn != ''">
+	        order_item_sn = #{order_item_sn},
+	      </if>
+	      <if test="industry_id != null and industry_id != ''">
+	        industry_id = #{industry_id},
+	      </if>
+	      update_time = now()
+	    </set>
+	    where id = #{id}
+	 </update>
+	 
+	 <delete id="deleteIds" parameterType="java.util.List">
+    	delete from t_factory_manage where id in 
+    	<foreach collection="list" item="item" index="index"
+            open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+     </delete>
+    
+    
+    <select id="fetchByRoleId" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+	SELECT
+		t.id,
+		t.NAME,
+		t.CODE,
+		t.order_item_sn,
+		t.industry_id,
+		t.update_time
+	FROM
+		t_factory_manage t 
+		left join SNDB_S9000.t_role_company t1 
+		on t.id = t1.company_id
+		where t1.role_id = #{role_id}
+    </select>
+    <select id="findFactoryManageNotExistByCompany" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+		select t1.id,t1.code,t1.name from t_factory_manage t1 where (1=1) 
+		<if test="code != null and code != ''">
+			and t1.code not in (#{code})
+		</if>
+		order by t1.code asc
+	</select>
+	<select id="fetchBySubId" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+    	SELECT t1.id,t1.code,t1.name  FROM t_factory_manage t1 where t1.id = #{id}
+    </select>
+    <select id="fetchByIdsList" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+    	select id,name from t_factory_manage where id in 
+    	<foreach collection="list" item="item" index="index"
+            open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+    <select id="fetchByComapnyIdList" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.FactoryBean">
+    	select id,name from t_factory_manage where (1=1)
+    	<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and id in 
+	    	<foreach collection="roleCompanyBeans" item="item" index="index"
+	            open="(" close=")" separator=",">
+	            #{item.company_id}
+	        </foreach>
+		</if>
+		order by id asc
+    </select>
+</mapper>

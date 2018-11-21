@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s6000.dao.FilterelementReplaceLogMapper" >
+	
+	<sql id="sql_columns">
+		id,company_id,device_id,create_time
+	</sql>
+	
+	 
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+
+	<select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s6000.dao.domain.FilterelementReplaceLog">
+     SELECT t.id,t.company_id,t.device_id,t.create_time,b.user_path,e.country_code country,e.province_code province,e.city_code city FROM t_filterelement_replace_log t,SNDB_Distribution.t_device_belong b,t_device_ext e where (1=1) 
+     and t.device_id=b.device_id and t.company_id=b.company_id and t.device_id=e.device_id
+			<if test="company_id != null and company_id != ''">
+	          and t.company_id = #{company_id}
+	        </if>
+	        <if test="device_id != null and device_id != ''">
+	          and t.device_id like '%${device_id}%'
+	        </if>
+	        <if test="user_path != null">
+				AND b.user_path  like '${user_path}%'
+			</if>
+			ORDER BY t.create_time DESC
+			limit #{offset},#{limit}       
+    </select>
+    
+	 <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_filterelement_replace_log t,SNDB_Distribution.t_device_belong b where (1=1) 
+        and t.device_id=b.device_id and t.company_id=b.company_id
+        <if test="company_id != null and company_id != ''">
+	          and t.company_id = #{company_id}
+        </if>
+        <if test="device_id != null and device_id != ''">
+          and t.device_id like '%${device_id}%'
+        </if>
+        <if test="user_path != null">
+			AND b.user_path  like '${user_path}%'
+		</if>
+    </select>  
+    
+    <select id="countLvXinNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_filterelement_replace_log t where (1=1) 
+        <if test="device_id != null and device_id != ''">
+          and t.device_id like '%${device_id}%'
+        </if>
+    </select>  
+    
+</mapper>

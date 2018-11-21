@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.yunwa.dao.BusinessOrderMapper" >
+<!--     <cache type="org.mybatis.caches.redis.LoggingRedisCache"/> -->
+    <sql id="sql_columns">
+
+            order_id , 
+            device_id ,
+            app_key , 
+            company_id , 
+            user_id , 
+            order_type , 
+            order_status , 
+            order_note , 
+            order_amount , 
+            recharge_package_id , 
+            pay_type , 
+            pay_status , 
+            pay_time , 
+            red_envelope_group_id , 
+            red_envelope_group_status , 
+            create_time , 
+            update_time , 
+            share_overdue_time , 
+            exception_status,
+            order_present 
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.yunwa.dao.domain.BusinessOrder" useGeneratedKeys="true" keyProperty="order_id">
+        insert into t_business_order
+          (
+          <include refid="sql_columns" />
+          )
+        values
+          (
+    	    	#{order_id},
+    	    	null,
+	    	    	#{app_key},
+	    	    	#{company_id},
+	    	    	#{user_id},
+	    	    	#{order_type},
+	    	    	null,
+	    	    	null,
+	    	    	#{order_amount},
+	    	    	null,
+	    	    	#{pay_type},
+	    	    	#{pay_status},
+	    	    	null,
+	    	    	null,
+	    	    	null,
+	    	    	now(),
+	    	    	null,
+	    	    	null,
+	    	    	0,
+	    	    	#{order_present}
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" />
+			FROM t_business_order t
+			<include refid="sql_where" />
+			Order BY t.create_time DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" />
+             FROM t_business_order
+			 <include refid="sql_where" />
+             Order BY t.create_time DESC
+        </otherwise>
+      </choose>         
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_business_order t <include refid="sql_where" />
+    </select>
+    
+    <select id="fetchGroupByUserId" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+	  <choose>
+        <when test="limit>0">
+			SELECT user_id,SUM(order_present) as order_present ,truncate(SUM(order_amount),2) as order_amounts_str 
+			FROM t_business_order t
+			<include refid="sql_where" />
+			<if test="user_path != null and user_path!='' ">
+				AND t.device_id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+			</if>
+			<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+			</if>
+			AND t.pay_status=2
+			GROUP BY user_id
+			<if test="order_by == 1">
+		        Order BY SUM(order_amount) DESC
+		    </if>
+		    <if test="order_by == 2">
+		        Order BY SUM(order_amount) ASC
+		    </if>
+		    <if test="order_by == 3">
+		        Order BY SUM(order_present) DESC
+		    </if>
+		    <if test="order_by == 4">
+		        Order BY SUM(order_present) ASC
+		    </if>
+<!-- 			Order BY t.create_time DESC -->
+			limit #{offset},#{limit}  
+        </when>
+        <otherwise>
+            SELECT user_id,SUM(order_present) as order_present ,truncate(SUM(order_amount),2) as order_amounts_str 
+			FROM t_business_order t
+			<include refid="sql_where" />
+			<if test="user_path != null and user_path!='' ">
+				AND t.device_id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+			</if>
+			<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+			</if>
+			AND t.pay_status=2
+			GROUP BY user_id
+			<if test="order_by == 1">
+		        Order BY SUM(order_amount) DESC
+		    </if>
+		    <if test="order_by == 2">
+		        Order BY SUM(order_amount) ASC
+		    </if>
+		    <if test="order_by == 3">
+		        Order BY SUM(order_present) DESC
+		    </if>
+		    <if test="order_by == 4">
+		        Order BY SUM(order_present) ASC
+		    </if>
+<!--             Order BY t.create_time DESC -->
+        </otherwise>
+      </choose>   
+    </select>
+    
+    <select id="fetchGroupByDeviceId" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+		<choose>
+        <when test="limit>0">
+			SELECT t.device_id,SUM(t.order_present) as order_present ,truncate(SUM(t.order_amount),2) as order_amounts_str,b.user_path
+			FROM t_business_order t,SNDB_Distribution.t_device_belong b where t.device_id=b.device_id and b.company_id=#{company_id} 
+			<if test="device_id != null and device_id!='' ">
+				AND t.device_id like '%${device_id}'
+			</if>
+			<if test="user_path != null and user_path!='' ">
+				AND b.user_path like '${user_path}%'
+			</if>
+			<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(t.create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+			</if>
+			AND t.pay_status=2
+			GROUP BY t.device_id
+			<if test="order_by == 1">
+		        Order BY SUM(t.order_amount) DESC
+		    </if>
+		    <if test="order_by == 2">
+		        Order BY SUM(t.order_amount) ASC
+		    </if>
+		    <if test="order_by == 3">
+		        Order BY SUM(t.order_present) DESC
+		    </if>
+		    <if test="order_by == 4">
+		        Order BY SUM(t.order_present) ASC
+		    </if> 
+<!-- 			Order BY t.create_time DESC -->
+			limit #{offset},#{limit}  
+        </when>
+        <otherwise>
+            SELECT t.device_id,SUM(t.order_present) as order_present ,truncate(SUM(t.order_amount),2) as order_amounts_str,b.user_path
+			FROM t_business_order t,SNDB_Distribution.t_device_belong b where t.device_id=b.device_id and b.company_id=#{company_id} 
+			<if test="device_id != null and device_id!='' ">
+				AND t.device_id like '%${device_id}'
+			</if>
+			<if test="user_path != null and user_path!='' ">
+				AND b.user_path like '${user_path}%'
+			</if>
+			<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(t.create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+			</if>
+			AND t.pay_status=2
+			GROUP BY t.device_id
+			<if test="order_by == 1">
+		        Order BY SUM(t.order_amount) DESC
+		    </if>
+		    <if test="order_by == 2">
+		        Order BY SUM(t.order_amount) ASC
+		    </if>
+		    <if test="order_by == 3">
+		        Order BY SUM(t.order_present) DESC
+		    </if>
+		    <if test="order_by == 4">
+		        Order BY SUM(t.order_present) ASC
+		    </if> 
+<!--             Order BY t.create_time DESC -->
+        </otherwise>
+      </choose>   
+    </select>
+    
+    <select id="countGroupByUserId" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) from (select user_id,SUM(order_present) as order_present ,SUM(order_amount) as order_amount 
+		FROM t_business_order t
+		<include refid="sql_where" />
+		<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+		</if>
+		<if test="user_path != null and user_path!='' ">
+				AND t.device_id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+		</if>
+		AND t.pay_status=2
+		GROUP BY user_id )as user_group
+    </select>
+    
+    <select id="countGroupByDeviceId" parameterType="java.util.Map" resultType="java.lang.Integer">
+       select count(1) from (SELECT t.device_id,SUM(t.order_present) as order_present ,truncate(SUM(t.order_amount),2) as order_amounts_str
+			FROM t_business_order t,SNDB_Distribution.t_device_belong b where t.device_id=b.device_id and b.company_id=#{company_id} 
+			<if test="device_id != null and device_id!='' ">
+				AND t.device_id like '%${device_id}'
+			</if>
+			<if test="user_path != null and user_path!='' ">
+				AND b.user_path like '${user_path}%'
+			</if>
+			<if test="start_time != null and end_time!=null ">
+				AND DATE_FORMAT(t.create_time,'%Y-%m-%d') BETWEEN #{start_time} AND #{end_time} 
+			</if>
+			AND t.pay_status=2
+			GROUP BY t.device_id) aa
+    </select>
+    
+    <update id="changeOrderStatus" parameterType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+		update t_business_order
+	    <set >
+	    update_time = now(),
+        	<if test="order_status != null" >
+    	    		order_status = #{order_status}
+			</if>
+   	    </set>
+	    where order_id=#{order_id}
+    </update>
+    
+    <select id="indexcount" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+        SELECT sum(order_amount)as order_amount,sum(order_present) as order_present FROM t_business_order 
+		<include refid="sql_where" />
+    </select>
+    
+    <select id="fetchByUserids" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+		<choose>
+       <when test="limit>0">
+			SELECT t.user_id,t.create_time,t.app_key,t.order_amount,t.order_present,t1.user_address as address
+			FROM t_business_order t
+			LEFT JOIN t_reserving_order t1
+			on t1.order_id = t.order_id
+			<include refid="sql_where" />
+			AND t.order_type = 1 AND t.pay_status > 1
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+            SELECT t.user_id,t.create_time,t.app_key,t.order_amount,t.order_present,t1.user_address as address
+            FROM t_business_order
+			<include refid="sql_where" />
+			AND t.order_type = 1 AND t.pay_status > 1
+        </otherwise>
+      </choose>
+    </select>
+    
+    <select id="fetchOrderCountByUserids" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1) 
+        FROM t_business_order t
+		LEFT JOIN t_reserving_order t1
+		on t1.order_id = t.order_id
+		<include refid="sql_where" />
+		AND t.order_type = 1 AND t.pay_status > 1
+    </select>
+    
+    <!-- 用户消费明细 start 2018-01-03  -->
+     <select id="fetchByUserConsumeDetailList" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+     SELECT user_id,order_present,truncate(order_amount,2) as order_amounts_str,create_time FROM t_business_order t WHERE  t.pay_status=2
+     <if test="company_id != null" >
+          AND company_id = #{company_id}	    		
+	 </if>
+	 <if test="user_id != null" >
+          AND t.user_id = #{user_id}	    		
+	 </if>
+      order by create_time desc limit #{offset},#{limit}  
+     </select>
+      <select id="countUserDetailNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+		 SELECT COUNT(1) from ( SELECT user_id,truncate(order_amount,2) as order_amounts_str,create_time FROM t_business_order t WHERE  t.pay_status=2
+	     <if test="company_id != null" >
+	          AND company_id = #{company_id}	    		
+		 </if>
+		 <if test="user_id != null" >
+	          AND t.user_id = #{user_id}	    		
+		 </if>)aa
+    </select>
+    <!-- 用户消费明细 end 2018-01-03 -->
+    
+    
+    <!-- 设备消费明细 start 2018-01-03  -->
+     <select id="fetchByDeviceConsumeDetailList" parameterType="java.util.Map" resultType="com.scinan.iot.yunwa.dao.domain.BusinessOrder">
+     SELECT device_id,order_present,truncate(order_amount,2) as order_amounts_str,create_time FROM t_business_order t WHERE  t.pay_status=2
+     <if test="company_id != null" >
+          AND company_id = #{company_id}	    		
+	 </if>
+	 <if test="device_id != null" >
+          AND t.device_id = #{device_id}	    		
+	 </if>
+      order by create_time desc limit #{offset},#{limit}  
+     </select>
+      <select id="countDeviceDetailNum" parameterType="java.util.Map" resultType="java.lang.Integer">
+		 SELECT COUNT(1) from ( SELECT device_id,truncate(order_amount,2) as order_amounts_str,create_time FROM t_business_order t WHERE  t.pay_status=2
+	     <if test="company_id != null" >
+	          AND company_id = #{company_id}	    		
+		 </if>
+		 <if test="device_id != null" >
+	          AND t.device_id = #{device_id}	    		
+		 </if>)aa
+    </select>
+    <!-- 设备消费明细 end 2018-01-03 -->
+    
+
+</mapper>

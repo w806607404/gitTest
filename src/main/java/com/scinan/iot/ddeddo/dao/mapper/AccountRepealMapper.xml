@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.AccountRepealMapper" >
+	<!--  默认不使用缓存
+    <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>
+    -->
+    <sql id="sql_columns">
+            id , 
+           	user_id,
+			parent_id,
+			reason,
+			create_time
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountRepeal" useGeneratedKeys="true" keyProperty="id">
+        insert into t_account_repeal
+          (
+             	user_id,
+				parent_id,
+				reason,
+				create_time
+          )
+        values
+          (
+    	    	#{user_id},
+	    	    #{parent_id},
+	    	    #{reason},#{create_time}
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.AccountRepeal">
+			SELECT (select name from t_role r where r.id = t1.role_id )role_name,t.id,t.reason,t.create_time,t1.user_name,t1.user_nickname,t1.agent_name,t1.agent_phone,t1.role_id,t1.province_name,t1.city_name,t1.district_name FROM t_account_repeal t 
+			left join t_account_info t1 on t1.id = t.user_id 
+		        where t.parent_id = #{parent_id}
+			<if test="province_id != null">
+				and t1.province_id = #{province_id}
+			</if>
+			<if test="city_id != null">
+				and t1.city_id = #{city_id}
+			</if>
+			<if test="district_id != null">
+				and t1.district_id = #{district_id}
+			</if>
+			<if test="user_name != null">
+				and t1.user_name = #{user_name}
+			</if>
+			<if test="user_nickname != null">
+				and t1.user_nickname like '%${user_nickname}%'
+			</if>
+			ORDER BY create_time desc 	limit #{offset},#{limit}  
+    </select>
+
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.ddeddo.dao.domain.AccountRepeal">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_account_repeal t
+        where
+        t.id=#{id}
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_account_repeal t 
+        left join t_account_info t1 on t1.id = t.user_id 
+        	 where t.parent_id = #{parent_id}
+			<if test="province_id != null">
+				and t1.province_id = #{province_id}
+			</if>
+			<if test="city_id != null">
+				and t1.city_id = #{city_id}
+			</if>
+			<if test="district_id != null">
+				and t1.district_id = #{district_id}
+			</if>
+			<if test="user_name != null">
+				and t1.user_name = #{user_name}
+			</if>
+    </select>
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_account_repeal where id=#{id}
+    </delete>
+    
+    <delete id="deleteByUser_id" parameterType="java.lang.Long">
+        delete from t_account_repeal where user_id=#{user_id}
+    </delete> 
+
+    <update id="update" parameterType="com.scinan.iot.ddeddo.dao.domain.AccountRepeal">
+		update t_account_repeal
+	    <set >
+        	<if test="user_id != null" >
+    	    		user_id = #{user_id},
+		    </if>
+        	<if test="parent_id != null" >
+    	    		parent_id = #{parent_id},
+		    </if>
+		    <if test="reason != null" >
+    	    		reason = #{reason},
+		    </if>
+        	<if test="create_time != null" >
+    	    		create_time = #{create_time},
+		    </if>
+    	    </set>
+	    where id=#{id}
+    </update>
+
+</mapper>

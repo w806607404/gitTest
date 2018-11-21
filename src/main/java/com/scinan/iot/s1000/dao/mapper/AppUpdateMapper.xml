@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.AppUpdateMapper" >
+<!--     <cache type="org.mybatis.caches.redis.LoggingRedisCache"/> -->
+	<sql id="sql_columns">
+		id,ctype,os,show_version,version,content,url,md5,file_size,utype,status,user_id,update_time,app_key
+	</sql>
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.AppUpdateBean">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_app_update t <include refid="sql_where" />
+			ORDER BY t.update_time DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_app_update t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    
+    <select id="fetchById" resultType="com.scinan.iot.s1000.dao.domain.AppUpdateBean">
+    	select * from t_app_update where id = #{id}
+    </select>
+
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_app_update t <include refid="sql_where" />
+    </select>
+
+    <insert id="save" parameterType="com.scinan.iot.s1000.dao.domain.AppUpdateBean">
+        insert into t_app_update
+          (
+          <include refid="sql_columns" />
+          )
+        values
+          (
+          #{id},#{ctype},#{os}, #{show_version}, #{version}, 
+          #{content},#{url},#{md5},#{file_size},#{utype},
+          #{status},#{user_id},now(),#{app_key}
+          )
+    </insert>
+    
+    
+    <update id="update" parameterType="com.scinan.iot.s1000.dao.domain.AppUpdateBean">
+		update t_app_update
+	    <set >
+	      <if test="ctype != null" >
+	        ctype = #{ctype},
+	      </if>
+	      <if test="os != null" >
+	        os = #{os},
+	      </if>
+	      <if test="show_version != null" >
+	        show_version = #{show_version},
+	      </if>
+	      <if test="version != null" >
+	        version = #{version},
+	      </if>
+	      <if test="content != null" >
+	        content = #{content},
+	      </if>
+	      <if test="url != null" >
+	        url = #{url},
+	      </if>
+	      <if test="md5 != null" >
+	        md5 = #{md5},
+	      </if>
+	      <if test="file_size != null" >
+	        file_size = #{file_size},
+	      </if>
+	      <if test="utype != null" >
+	        utype = #{utype},
+	      </if>
+	      <if test="status != null" >
+	        status = #{status},
+	      </if>
+	      <if test="user_id != null" >
+	        user_id = #{user_id},
+	      </if>
+	      <if test="app_key != null">
+	      	app_key = #{app_key},
+	      </if>
+	        update_time = now()
+	    </set>
+	    where id = #{id,jdbcType=BIGINT}
+    </update>
+    
+    <delete id="delete" parameterType="java.lang.Long">
+    	delete from t_app_update where id = #{id}
+    </delete>
+    
+    
+    <sql id="sql_columns_relevance">
+	t.id, t.ctype, t.os, t.show_version, t.version, t.content, t.url, t.md5, t.file_size, t.utype, t.status, t.user_id, t.update_time
+	</sql>
+	
+    <select id="fetchAppUpdateByPage" resultType="com.scinan.iot.s1000.dao.domain.AppUpdateBean">
+		SELECT <include refid="sql_columns_relevance" />,c.account_name,f.name as factory_name,t.app_key,o.app_name
+		from t_app_update t 
+		left join SNDB_S9000.t_account_info c 
+		on t.user_id = c.id 
+		left join t_factory_manage f 
+		on t.ctype = f.code
+		left join t_app_info o on o.app_key = t.app_key
+		where 1=1
+		<if test="os != null and os != ''">
+		and t.os = #{os}
+		</if>
+		<if test="status != null and status != ''">
+		and t.status = #{status}
+		</if>
+		<if test="utype != null and utype != ''">
+		and t.utype = #{utype}
+		</if>
+		
+		<if test="company_id != null and company_id != ''">
+		and t.ctype = #{company_id}	
+		</if>
+		
+		<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and t.ctype in 
+	    	<foreach collection="roleCompanyBeans" item="item" index="index"
+	            open="(" close=")" separator=",">
+	            #{item.company_id}
+	        </foreach>
+		</if>
+		order by t.update_time desc
+		limit #{offset},#{limit}  
+	</select>
+    
+    <select id="fetchAppUpdateCount" resultType="java.lang.Integer">
+		SELECT COUNT(1)
+		from t_app_update t 
+		left join SNDB_S9000.ly_user c 
+		on t.user_id = c.id 
+		left join t_factory_manage f 
+		on t.ctype = f.code
+		left join t_app_info o on o.app_key = t.app_key
+		where 1=1
+		<if test="os != null and os != ''">
+		and t.os = #{os}
+		</if>
+		<if test="status != null and status != ''">
+		and t.status = #{status}
+		</if>
+		<if test="utype != null and utype != ''">
+		and t.utype = #{utype}
+		</if>
+		<if test="roleCompanyBeans != null and roleCompanyBeans != ''">
+			and t.ctype in 
+	    	<foreach collection="roleCompanyBeans" item="item" index="index"
+	            open="(" close=")" separator=",">
+	            #{item.company_id}
+	        </foreach>
+		</if>
+		
+		<if test="company_id != null and company_id != ''">
+		and t.ctype = #{company_id}	
+		</if>
+	</select>
+    
+    
+    
+</mapper>

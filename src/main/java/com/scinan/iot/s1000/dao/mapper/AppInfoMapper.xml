@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s1000.dao.AppInfoMapper" >
+
+	
+	<sql id="sql_columns">
+		app_key,user_id,app_name,app_description,app_secret,company_id,create_time,update_time,app_type,app_progress,app_level
+	</sql>
+	
+	 
+	<sql id="sql_where">
+	    <if test="conds!=null">
+	        <trim prefix="WHERE" prefixOverrides="AND|OR">
+	            <foreach collection="conds.conds" index="index" item="cond">
+	                ${cond.linkType}
+	                <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+	                <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+	                <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+	                <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+	                <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+	                <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+	                <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+	                <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+	                <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+	                <if test="cond.condType == 'IN'">${cond.s_param} IN 
+	                    <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+	                        #{item}
+	                    </foreach>                                       
+	                </if>
+	            </foreach>
+	        </trim>
+	    </if>
+	</sql>
+	
+	<select id="fetchById" resultType="com.scinan.iot.s1000.dao.domain.AppInfoBean">
+    	SELECT <include refid="sql_columns" />  FROM t_app_info where app_key = #{id}
+    </select>
+    
+	<select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s1000.dao.domain.AppInfoBean">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" />,app_key as id FROM t_app_info t
+			<include refid="sql_where" />
+			ORDER BY create_time DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" />,app_key as id  FROM t_app_info t <include refid="sql_where" /> ORDER BY create_time DESC
+        </otherwise>
+      </choose>         
+    </select>
+    
+	 <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_app_info t <include refid="sql_where" />
+    </select>  
+    
+    
+    <insert id="save" parameterType="com.scinan.iot.s1000.dao.domain.AppInfoBean" useGeneratedKeys="true" keyProperty="app_key">
+        insert into t_app_info
+          (
+          <include refid="sql_columns" />
+          )
+       	values
+          (
+          #{app_key},
+		  #{user_id},
+ 		  #{app_name},
+ 		  #{app_description},
+ 		  #{app_secret},
+ 		  #{company_id},
+ 		  now(),
+ 		  #{update_time},
+ 		  #{app_type},
+ 		  #{app_progress},
+ 		  #{app_level}
+          )
+    </insert> 
+	
+	<update id="update" parameterType="com.scinan.iot.s1000.dao.domain.AppInfoBean">
+		update t_app_info
+	    <set> 
+	      <if test="user_id != null and user_id != ''">
+	        user_id = #{user_id},
+	      </if>
+	      <if test="app_name != null and app_name != ''">
+	        app_name = #{app_name},
+	      </if>
+	      <if test="app_description != null and app_description != ''">
+	        app_description = #{app_description},
+	      </if>
+	      <if test="company_id != null and company_id != ''">
+	        company_id = #{company_id},
+	      </if>
+	       update_time = now()
+	    </set>
+	    where app_key = #{app_key}
+	 </update>
+	 
+	<delete id="deleteIDs" parameterType="java.util.List">
+   	delete from t_app_info where app_key in 
+   		<foreach collection="list" item="item" index="index"
+	        open="(" close=")" separator=",">
+	        #{item}
+      	</foreach>
+    </delete>
+    
+	<select id="fetchByAppKey" resultType="java.lang.String">
+    	SELECT app_name  FROM t_app_info where app_key = #{app_key}
+    </select>
+    <select id="fetchByAppkeyList" resultType="com.scinan.iot.s1000.dao.domain.AppInfoBean">
+    	SELECT <include refid="sql_columns" />  FROM t_app_info where company_id = #{company_id}
+    	<if test="app_key != null and app_key != ''">
+	        and app_key not in (#{app_key}) order by app_key asc
+	    </if>
+    </select>
+     <select id="fetchByCompanyId" resultType="com.scinan.iot.s1000.dao.domain.AppInfoBean">
+    	SELECT <include refid="sql_columns" />  FROM t_app_info <include refid="sql_where" />
+    </select>
+</mapper>

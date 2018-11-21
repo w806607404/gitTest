@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+	
+	<!-- 数据库相关配置 -->	
+	<bean id="dataSourceS1000" class="com.alibaba.druid.pool.DruidDataSource"  destroy-method="close">  
+        <property name="url" value="${scinandbS1000.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryS1000" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceS1000" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/s1000/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryS1000"/>
+		<property name="basePackage" value="com.scinan.iot.s1000.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerS1000" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceS1000" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerS1000" />
+	
+	
+	<!-- S6000 -->
+	
+	<bean id="dataSourceS6000" class="com.alibaba.druid.pool.DruidDataSource"  
+        destroy-method="close">  
+        <property name="url" value="${scinandbS6000.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+	
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryS6000" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceS6000" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/s6000/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryS6000"/>
+		<property name="basePackage" value="com.scinan.iot.s6000.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerS6000" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceS6000" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerS6000" />
+	
+	
+	<!-- S9000 -->
+	<bean id="dataSourceS9000" class="com.alibaba.druid.pool.DruidDataSource"  
+        destroy-method="close">  
+        <property name="url" value="${scinandbS9000.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryS9000" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceS9000" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/s9000/dao/mapper/*Mapper.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryS9000"/>
+		<property name="basePackage" value="com.scinan.iot.s9000.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerS9000" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceS9000" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerS9000" />
+	
+	
+	<!-- Ddeddo  -->
+	<bean id="dataSourceDdeddo" class="com.alibaba.druid.pool.DruidDataSource"   destroy-method="close">  
+        <property name="url" value="${scinandbDdeddo.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryDdeddo" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceDdeddo" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/ddeddo/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryDdeddo"/>
+		<property name="basePackage" value="com.scinan.iot.ddeddo.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerDdeddo" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceDdeddo" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerDdeddo" />
+	
+	<!-- production -->
+	<bean id="dataSourceProduction" class="com.alibaba.druid.pool.DruidDataSource"  
+        destroy-method="close">  
+        <property name="url" value="${scinandbProduction.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryProduction" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceProduction" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/production/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryProduction"/>
+		<property name="basePackage" value="com.scinan.iot.production.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerProduction" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceProduction" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerProduction" />
+	
+	
+	<!-- yunwa -->
+	<bean id="dataSourceYunwa" class="com.alibaba.druid.pool.DruidDataSource"  
+        destroy-method="close">  
+        <property name="url" value="${scinandbYunwa.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryYunwa" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceYunwa" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/yunwa/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryYunwa"/>
+		<property name="basePackage" value="com.scinan.iot.yunwa.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerYunwa" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceYunwa" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerYunwa" />
+	
+	
+	<!-- S8000temp -->
+	<bean id="dataSourceS8000temp" class="com.alibaba.druid.pool.DruidDataSource"  
+        destroy-method="close">  
+        <property name="url" value="${scinandbS8000temp.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="100" />  
+        <property name="initialSize" value="10" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="10" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryS8000temp" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceS8000temp" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/s8000temp/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryS8000temp"/>
+		<property name="basePackage" value="com.scinan.iot.s8000temp.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerS8000temp" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceS8000temp" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerS8000temp" />
+
+	<!-- S8000log -->
+	
+	<bean id="dataSourceS8000log" class="com.alibaba.druid.pool.DruidDataSource"  
+        destroy-method="close">  
+        <property name="url" value="${scinandbS8000log.url}" />  
+        <property name="username" value="${scinandb.username}" />  
+        <property name="password" value="${scinandb.password}" />  
+        <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+        <property name="filters" value="stat" />  
+  
+        <property name="maxActive" value="10" />  
+        <property name="initialSize" value="5" />  
+        <property name="maxWait" value="60000" />  
+        <property name="minIdle" value="2" />  
+  
+        <property name="timeBetweenEvictionRunsMillis" value="60000" />  
+        <property name="minEvictableIdleTimeMillis" value="300000" />  
+  
+        <property name="validationQuery" value="SELECT 1 FROM DUAL" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnBorrow" value="false" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="maxOpenPreparedStatements"  
+            value="20" />  
+        <property name="removeAbandoned" value="true" /> <!-- 打开removeAbandoned功能 -->  
+        <property name="removeAbandonedTimeout" value="1800" /> <!-- 1800秒，也就是30分钟 -->  
+        <property name="logAbandoned" value="true" /> <!-- 关闭abanded连接时输出错误日志 -->  
+    </bean>
+	
+	
+	<!-- 配置sqlSessionFactory -->
+	<bean id="sqlSessionFactoryS8000log" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceS8000log" />
+		<property name="failFast" value="true" />
+		<property name="mapperLocations" value="classpath*:com/scinan/iot/s8000log/dao/mapper/*.xml"/>
+		<property name="configurationProperties">
+			<props>
+				<prop key="cacheEnabled">true</prop>
+				<prop key="lazyLoadingEnabled">false</prop>
+				<prop key="aggressiveLazyLoading">true</prop>
+				<prop key="multipleResultSetsEnabled">true</prop>
+				<prop key="useColumnLabel">true</prop>
+				<prop key="useGeneratedKeys">true</prop>
+				<prop key="autoMappingBehavior">FULL</prop>
+				<prop key="defaultExecutorType">BATCH</prop>
+				<prop key="defaultStatementTimeout">25000</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryS8000log"/>
+		<property name="basePackage" value="com.scinan.iot.s8000log.dao" />
+	</bean>
+	<!-- 事务管理 -->
+	<bean id="jtaManagerS8000log" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceS8000log" />
+	</bean>
+	<!--启动spring注解功能 -->
+	<tx:annotation-driven transaction-manager="jtaManagerS8000log" />
+	
+</beans>

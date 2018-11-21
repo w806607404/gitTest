@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:cache="http://www.springframework.org/schema/cache" xmlns:redis="http://www.springframework.org/schema/redis"
+	xmlns:c="http://www.springframework.org/schema/c"
+
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	 http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd 
+	 http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd 
+	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+	  http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache-3.2.xsd 
+	  http://www.springframework.org/schema/redis http://www.springframework.org/schema/redis/spring-redis.xsd">
+
+	<!-- redis缓存框架相关配置 -->
+	<bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">
+		<property name="maxTotal" value="512" />
+		<property name="maxIdle" value="128" />
+		<property name="maxWaitMillis" value="6000" />
+		<!-- commetted for twemproxy <property name="testOnBorrow" value="true" 
+			/> -->
+	</bean>
+	<bean id="jedisConnectionFactory" primary="true"
+		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+		<property name="poolConfig" ref="jedisPoolConfig"></property>
+		<property name="hostName" value="${twemproxy.server}"></property>
+		<property name="port" value="${twemproxy.port}"></property>
+		<property name="password" value="${twemproxy.password}"></property>
+		<property name="usePool" value="true" />
+	</bean>
+
+	<bean id="redisConnectionFactory"
+		class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+		<property name="poolConfig" ref="jedisPoolConfig"></property>
+		<property name="hostName" value="${redis.server}"></property>
+		<property name="port" value="${redis.port}"></property>
+		<property name="password" value="${redis.password}"></property>
+		<property name="usePool" value="true" />
+	</bean>
+	<bean id="cacheService" primary="true"
+		class="com.scinan.base.cache.impl.RedisCacheServiceImpl">
+		<property name="jedisConnectionFactory" ref="jedisConnectionFactory"></property>
+	</bean>
+
+	<bean id="redisService" class="com.scinan.base.cache.impl.RedisCacheServiceImpl">
+		<property name="jedisConnectionFactory" ref="redisConnectionFactory"></property>
+	</bean>
+
+	<bean id="redisSimpleService" class="com.scinan.base.cache.impl.RedisSimpleCacheServiceImpl">
+		<property name="jedisConnectionFactory" ref="redisConnectionFactory"></property>
+	</bean>
+	
+	<bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate"
+		p:connection-factory-ref="jedisConnectionFactory" />
+
+	<cache:annotation-driven></cache:annotation-driven>
+
+	<bean id="cacheManager" class="org.springframework.data.redis.cache.RedisCacheManager"
+		c:template-ref="redisTemplate" />
+
+	<bean id="redisQueueFactory" class="com.scinan.base.cache.impl.RedisQueueFactory">
+		<lookup-method name="createQueue" bean="redisQueue" />
+	</bean>
+</beans>

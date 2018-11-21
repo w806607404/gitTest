@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s6000.dao.DeviceUserMapper" >
+    <!--  -->
+	<sql id="sql_columns">
+	device_id, user_id, mstype, mobile, create_time,email,m_user_id,pwd
+	</sql>
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        insert into t_device_user
+          (
+            device_id, user_id, mstype, mobile, create_time,email,m_user_id
+          )
+        values
+          (
+          #{device_id}, #{user_id}, #{mstype}, #{mobile},now(),#{email},#{m_user_id}
+          )
+    </insert>
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_device_user t <include refid="sql_where" />
+			ORDER BY t.create_time DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_device_user t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    <select id="fetchById" parameterType="java.lang.String" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_device_user t
+        where
+        t.device_id=#{device_id}
+    </select>
+    <select id="fetchDeviceListByUserId" parameterType="java.lang.Long" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_device_user t
+        where
+        t.user_id=#{user_id} order by create_time desc
+    </select>
+    <select id="fetchListByUserIdCompany" parameterType="com.scinan.iot.s6000.dao.domain.DeviceUser" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_device_user t
+        where
+        t.user_id=#{user_id} AND t.device_id like '${company_id}%'
+        <if test="mstype != null" >
+	       AND mstype = #{mstype}
+	    </if>
+    </select>    
+    
+    <select id="fectchDeviceUserByPk" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_device_user t
+        where t.device_id=#{device_id} and t.user_id=#{user_id}
+    </select>
+    <select id="fectchDeviceUserByPwd" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+          t.device_id,t.user_id,t.pwd as user_pwd,d.pwd as device_pwd FROM  t_device_user t,t_device_qianpa_pwd d 
+        where t.device_id=d.device_id 
+         and t.device_id=#{device_id} and t.user_id=#{user_id}
+    </select>
+    <select id="fetchDeviceListShare" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+		from t_device_user t where t.device_id = #{device_id}
+		and t.m_user_id = #{user_id}	    
+	</select>
+	 <select id="fetchDeviceShareInfo" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+		from t_device_user t where t.device_id = #{device_id}
+		and t.user_id = #{user_id}	    
+	</select>
+    <select id="isDeviceUserExists"  resultType="int">
+    	SELECT count(1) FROM t_device_user WHERE device_id=#{device_id} and user_id=#{user_id}
+    </select>
+    <select id="checkDeviceExist"  resultType="int">
+    	SELECT count(1) FROM t_device_user WHERE device_id=#{device_id}
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_device_user t <include refid="sql_where" />
+    </select>
+    <select id="listUserIdByDevice" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        user_id 
+        FROM t_device_user t
+        where
+        t.device_id=#{device_id} and t.user_id&lt;&gt;#{user_id}
+    </select>
+    
+    <select id="fetchShareDeviceList" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT user_id, device_id  
+        FROM t_device_user t
+        where t.m_user_id = #{user_id}
+    </select>
+    
+    <select id="fetchBoundUserList" parameterType="java.lang.String" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_device_user t
+        where
+        t.device_id=#{device_id}
+    </select>
+
+    <update id="update" parameterType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+		update t_device_user
+	    <set >
+	      <if test="user_id != null" >
+	        user_id = #{user_id},
+	      </if>
+	      <if test="mstype != null" >
+	        mstype = #{mstype},
+	      </if>
+	      <if test="mobile != null" >
+	        mobile = #{mobile},
+	      </if>
+	    </set>
+	    where device_id = #{device_id}
+    </update>
+    <update id="update2Slave">
+    	update t_device_user set mstype=1 where device_id=#{device_id} and mstype=0
+    </update>
+    <update id="update2Master">
+    	update t_device_user set mstype=0 where device_id=#{device_id} and user_id=#{user_id}
+    </update>
+    <update id="updateOperPwd">
+    	update t_device_user set pwd=#{pwd} where device_id=#{device_id} and user_id=#{user_id}
+    </update>
+    <update id="updateDevicePwdIsNull">
+    	update t_device_user set pwd=#{pwd} where device_id=#{device_id}
+    </update>
+    <delete id="delete" >
+        delete from t_device_user where device_id=#{device_id}
+    </delete>
+    <delete id="deleteDeviceUser" >
+        delete from t_device_user where device_id=#{device_id} and user_id=#{user_id} 
+    </delete>
+    <delete id="deleteUnbundlingDeviceUser" >
+        delete from t_device_user where device_id=#{device_id} and (user_id=#{user_id} or m_user_id=#{user_id})
+    </delete>
+    <delete id="deleteByDeviceid" >
+        delete from t_device_user where device_id=#{device_id}
+    </delete>
+    
+     <select id="fetchByMstype" resultType="com.scinan.iot.s6000.dao.domain.DeviceUser">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_device_user t
+        where
+        user_id = #{user_id} and mstype = #{mstype}
+    </select>
+</mapper>

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.PurchaseMapper" >
+	<!--  默认不使用缓存
+    <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>
+    -->
+    <sql id="sql_columns">
+            id , 
+            user_id,
+			parent_id,
+			device_type,
+			count,
+			amount,
+			invoice,
+			shipping,
+			status,
+			pay_type,
+			create_time,
+			update_time
+    </sql>
+    
+	<sql id="sql_beancolumns">
+		a.*,b.user_nickname user_nickname,b.user_name user_name,b.company_id company_id,c.device_name device_name				
+	</sql>
+	
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.Purchase" useGeneratedKeys="true" keyProperty="id">
+        insert into t_purchase
+          (
+             		user_id,
+					parent_id,
+					device_type,
+					count,
+					amount,
+					invoice,
+					shipping,
+					status,
+					pay_type,
+					create_time,
+					update_time
+          )
+        values
+          (
+    	    	#{user_id},
+	    	    #{parent_id},
+	    	    #{device_type}, #{count},#{amount},
+	    	    #{invoice},#{shipping}, #{status},#{pay_type},now(),#{update_time}
+	          )
+    </insert>
+	
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.Purchase">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_columns" /> FROM t_purchase t <include refid="sql_where" />
+			<if test="sort!=null">
+				ORDER BY ${sort.param}  ${sort.type} 
+			</if>
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_purchase t <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+	
+	<select id="fetchByPurchasePage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.PurchaseBean">
+     <choose>
+       <when test="limit>0">
+			SELECT <include refid="sql_beancolumns" /> 
+			FROM t_purchase a 
+			LEFT JOIN t_account_info b ON a.user_id=b.id
+			LEFT JOIN SNDB_6000000001.t_device_type c ON a.device_type=c.id
+			
+			<include refid="sql_where" />
+			<if test="sort!=null">
+				ORDER BY ${sort.param}  ${sort.type} 
+			</if>
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_beancolumns" /> 
+             FROM t_purchase a 
+			 LEFT JOIN t_account_info b ON a.user_id=b.id
+			 LEFT JOIN SNDB_6000000001.t_device_type c ON a.device_type=c.id 
+             
+             <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.ddeddo.dao.domain.PurchaseBean">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_purchase t
+        where
+        t.id=#{id}
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_purchase a 
+			 LEFT JOIN t_account_info b ON a.user_id=b.id
+			 LEFT JOIN SNDB_6000000001.t_device_type c ON a.device_type=c.id 
+			 <include refid="sql_where" />
+    </select>
+    
+    <select id="countByTransfer"  resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_purchase a 
+		where status in (0,1) 
+		and user_id = #{user_id} or parent_id = #{user_id}
+		and status in (0,1) 
+    </select>
+    
+    
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_purchase where id=#{id}
+    </delete>
+    
+     <delete id="deleteByUser_id" parameterType="java.lang.Long">
+        delete from t_purchase where user_id=#{user_id} or parent_id = #{user_id}
+    </delete> 
+	
+	<update id="updateStatus" parameterType="com.scinan.iot.ddeddo.dao.domain.Purchase">
+		update t_purchase 
+		<set >
+        	<if test="shipping != null" >
+    	    		shipping = #{shipping},
+		    </if>
+		    
+		    <if test="status != null" >
+    	    		status = #{status},
+		    </if>
+		    
+		    <if test="update_time == null" >
+    	    		update_time = now(),
+		    </if>
+    	 </set>		
+		WHERE id=#{id}
+	</update>
+	
+    <update id="update" parameterType="com.scinan.iot.ddeddo.dao.domain.Purchase">
+		update t_purchase
+	    <set >
+        	<if test="user_id != null" >
+    	    		user_id = #{user_id},
+		    </if>
+        	<if test="parent_id != null" >
+    	    		parent_id = #{parent_id},
+		    </if>
+        	<if test="device_type != null" >
+    	    		device_type = #{device_type},
+		    </if>
+		    <if test="count != null" >
+    	    		count = #{count},
+		    </if>
+		    <if test="amount != null" >
+    	    		amount = #{amount},
+		    </if>
+        	<if test="invoice != null" >
+    	    		invoice = #{invoice},
+		    </if>
+        	<if test="shipping != null" >
+    	    		shipping = #{shipping},
+		    </if>
+		    <if test="status != null" >
+    	    		status = #{status},
+		    </if>
+		    <if test="pay_type != null" >
+    	    		pay_type = #{pay_type},
+		    </if>
+        	<if test="create_time != null" >
+    	    		create_time = #{create_time},
+		    </if>
+		    <if test="update_time != null" >
+    	    		update_time = #{update_time},
+		    </if>
+    	    </set>
+	    where id=#{id}
+    </update>
+
+</mapper>

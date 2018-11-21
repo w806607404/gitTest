@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.ddeddo.dao.NotifySendMapper" >
+	<!--  默认不使用缓存
+    <cache type="org.mybatis.caches.redis.LoggingRedisCache"/>
+    -->
+    <sql id="sql_columns">
+            id , 
+            send_userId,
+			receive_userId,
+			device_type,
+			count,
+			amount,
+			user_name,
+			user_contact,
+			user_address,
+			notify_type,
+			shipping,
+			status,
+			receipt_time,
+			create_time,
+			company_id,
+			app_key
+    </sql>
+
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <insert id="save" parameterType="com.scinan.iot.ddeddo.dao.domain.NotifySend" useGeneratedKeys="true" keyProperty="id">
+        insert into t_notify_send
+          (
+             	send_userId,
+				receive_userId,
+				device_type,
+				count,
+				amount,
+				user_name,
+				user_contact,
+				user_address,
+				notify_type,
+				shipping,
+				status,
+				receipt_time,
+				create_time,
+				company_id,
+				app_key
+          )
+        values
+          (
+    	    	#{send_userId},
+	    	    #{receive_userId},
+	    	    #{device_type}, #{count},#{amount},#{user_name},#{user_contact},
+	    	    #{user_address},#{notify_type},
+	    	    #{shipping},#{status},
+	    	    #{receipt_time},now(),
+	    	    #{company_id},#{app_key}
+	          )
+    </insert>
+
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.NotifySend">
+     <choose>
+       <when test="limit>0">
+			SELECT a.*,b.agent_name send_user_nickname ,b2.agent_name user_nickname ,c.device_name device_name
+			FROM t_notify_send a 
+			LEFT JOIN t_account_info b ON a.send_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.receive_userId=b2.id
+			LEFT JOIN SNDB_6000000001.t_device_type c ON a.device_type=c.type and b.company_id = c.company_id
+			<include refid="sql_where" />
+				ORDER BY create_time desc 
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+            SELECT a.*,b.agent_name send_user_nickname ,b2.agent_name receive_user_nickname ,c.device_name device_name
+			FROM t_notify_send a 
+			LEFT JOIN t_account_info b ON a.send_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.receive_userId=b2.id
+			LEFT JOIN SNDB_6000000001.t_device_type c ON a.device_type=c.id 
+             <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+	
+	<!-- 补贴余额账单明细 -->
+	<select id="fetchBySubsidyAmountPage" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.NotifySend">
+     <choose>
+       <when test="limit>0">
+			SELECT a.id id,a.send_userId send_userId,b.agent_name send_user_nickname,b.user_name send_user_name ,
+			a.receive_userId receive_userId ,b2.agent_name user_nickname,b2.user_name receive_user_name ,
+		    c2.role_type role_type,a.amount amount,b2.province_name province_name, b2.city_name city_name, b2.district_name district_name,
+		    b2.province_id province_id, b2.city_id city_id, b2.district_id district_id,
+			a.status status,a.notify_type notify_type,a.receipt_time receipt_time
+			FROM t_notify_send a 
+			LEFT JOIN t_account_info b ON a.send_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.receive_userId=b2.id
+			LEFT JOIN t_role c ON b.role_id=c.id 
+			LEFT JOIN t_role c2 ON b2.role_id=c2.id
+			<include refid="sql_where" />
+			ORDER BY a.id  desc 
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+            SELECT a.id id,a.send_userId send_userId,b.agent_name send_user_nickname,b.user_name send_user_name ,
+			a.receive_userId receive_userId ,b2.agent_name user_nickname,b2.user_name receive_user_name ,
+		    c2.role_type role_type,a.amount amount,b2.province_name province_name, b2.city_name city_name, b2.district_name district_name,
+		    b2.province_id province_id, b2.city_id city_id, b2.district_id district_id,
+			a.status status,a.notify_type notify_type,a.receipt_time receipt_time
+			FROM t_notify_send a 
+			LEFT JOIN t_account_info b ON a.send_userId=b.id
+			LEFT JOIN t_account_info b2 ON a.receive_userId=b2.id
+			LEFT JOIN t_role c ON b.role_id=c.id 
+			LEFT JOIN t_role c2 ON b2.role_id=c2.id
+            <include refid="sql_where" />
+        </otherwise>
+      </choose>         
+    </select>
+    
+     <select id="fetchByTransfer" parameterType="java.util.Map" resultType="com.scinan.iot.ddeddo.dao.domain.NotifySend">
+		 SELECT COUNT(1)  FROM t_notify_send a 
+			where user_id = #{user_id}        	
+    </select>
+    
+    <select id="fetchById" parameterType="java.lang.Long" resultType="com.scinan.iot.ddeddo.dao.domain.NotifySend">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_notify_send t
+        where
+        t.id=#{id}
+    </select>
+    <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_notify_send a 
+        LEFT JOIN t_account_info b2 ON a.receive_userId=b2.id
+        <include refid="sql_where" />
+    </select>
+    
+    <select id="countByTransfer"  resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_notify_send a 
+		where status in (0,1,3) 
+		and (send_userId = #{user_id} or receive_userId = #{user_id})
+    </select>
+    
+    <delete id="delete" parameterType="java.lang.Long">
+        delete from t_notify_send where id=#{id}
+    </delete>
+    
+     <delete id="deleteByUser_id" parameterType="java.lang.Long">
+        delete from t_notify_send where send_userId=#{user_id} or receive_userId = #{user_id}
+    </delete> 
+
+    <update id="update" parameterType="com.scinan.iot.ddeddo.dao.domain.NotifySend">
+		update t_notify_send
+	    <set >
+        	<if test="send_userId != null" >
+    	    		send_userId = #{send_userId},
+		    </if>
+        	<if test="receive_userId != null" >
+    	    		receive_userId = #{receive_userId},
+		    </if>
+		    <if test="device_type != null" >
+    	    		device_type = #{device_type},
+		    </if>
+        	<if test="count != null" >
+    	    		count = #{count},
+		    </if>
+		    <if test="amount != null" >
+    	    		amount = #{amount},
+		    </if>
+		    <if test="user_name != null" >
+    	    		user_name = #{user_name},
+		    </if>
+		    <if test="user_contact != null" >
+    	    		user_contact = #{user_contact},
+		    </if>
+        	<if test="user_address != null" >
+    	    		user_address = #{user_address},
+		    </if>
+		    <if test="notify_type != null" >
+    	    		notify_type = #{notify_type},
+		    </if>
+		     <if test="shipping != null" >
+    	    		shipping = #{shipping},
+		    </if>
+		    <if test="status != null" >
+    	    		status = #{status},
+		    </if>
+        	<if test="receipt_time != null" >
+    	    		receipt_time = #{receipt_time},
+		    </if>
+        	<if test="create_time != null" >
+    	    		create_time = #{create_time},
+		    </if>
+		     <if test="company_id != null" >
+    	    		company_id = #{company_id},
+		    </if>
+    	    </set>
+	    where id=#{id}
+    </update>
+
+</mapper>

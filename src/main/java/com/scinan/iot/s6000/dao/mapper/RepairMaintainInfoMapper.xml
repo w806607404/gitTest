@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.scinan.iot.s6000.dao.RepairMaintainInfoMapper" >
+<!--      -->
+    <sql id="sql_columns">
+            id, device_id,type,user_id,company_id,device_name,title,contacts_name,contacts_phone,repair_details,create_time,status,handle_time,repair_money,handle_desc,handle_man,maintain_process
+  </sql>
+  <sql id="sql_where">
+        <if test="conds!=null">
+            <trim prefix="WHERE" prefixOverrides="AND|OR">
+                <foreach collection="conds.conds" index="index" item="cond">
+                    ${cond.linkType}
+                    <if test="cond.condType == 'EQUAL'">${cond.s_param} = #{cond.value}</if>
+                    <if test="cond.condType == 'GREATEQUAL'">${cond.s_param} &gt;= #{cond.value}</if>
+                    <if test="cond.condType == 'GREATTHAN'">${cond.s_param} &gt; #{cond.value}</if>
+                    <if test="cond.condType == 'LESSEQUAL'">${cond.s_param} &lt;= #{cond.value}</if>
+                    <if test="cond.condType == 'LESSTHAN'">${cond.s_param} &lt; #{cond.value}</if>
+                    <if test="cond.condType == 'BETWEEN'">${cond.s_param} BETWEEN #{cond.startValue} AND #{cond.endValue}</if>
+                    <if test="cond.condType == 'ISNULL'">${cond.s_param} IS NULL</if>
+                    <if test="cond.condType == 'NOTNULL'">${cond.s_param} IS NOT NULL</if>
+                    <if test="cond.condType == 'LIKE'">${cond.s_param} LIKE #{cond.value}</if>
+                    <if test="cond.condType == 'IN'">${cond.s_param} IN 
+                        <foreach item="item" index="index" collection="cond.value" open="(" separator="," close=")">
+                            #{item}
+                        </foreach>                                       
+                    </if>
+                </foreach>
+            </trim>
+        </if>
+    </sql>
+    <select id="fetchByPage" parameterType="java.util.Map" resultType="com.scinan.iot.s6000.dao.domain.RepairMaintainInfo">
+     <choose>
+       <when test="limit>0">
+			SELECT t.id, t.device_id,t.type,t.user_id,t.company_id,f.title device_name,t.title,t.contacts_name,t.contacts_phone,t.repair_details,t.create_time,t.status,t.handle_time,t.repair_money,t.handle_desc,t.handle_man,t.maintain_process,(select user_path from SNDB_Distribution.t_device_belong g where g.device_id=t.id and g.company_id=t.company_id)dealer FROM t_repair_maintain_info t,t_device_info f 
+			where t.device_id=f.id 
+			<if test="company_id != null" >
+	           and t.company_id=#{company_id}
+	        </if>
+			<if test="device_id != null" >
+	          and t.device_id like '%${device_id}'
+	        </if>
+		    <if test="status != null" >
+		       and t.status = #{status}
+		    </if>
+			<if test="user_path != null and user_path!='' ">
+				AND t.id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+			</if>
+			ORDER BY t.id DESC
+			limit #{offset},#{limit}  
+       </when>
+        <otherwise>
+             SELECT <include refid="sql_columns" /> FROM t_repair_maintain_info t <include refid="sql_where" /> 
+             ORDER BY id DESC
+        </otherwise>
+      </choose>         
+    </select>
+     <select id="count" parameterType="java.util.Map" resultType="java.lang.Integer">
+        SELECT COUNT(1)  FROM t_repair_maintain_info t ,t_device_info f
+        where t.device_id=f.id 
+		<if test="company_id != null" >
+           and t.company_id=#{company_id}
+        </if>
+		<if test="device_id != null" >
+          and t.device_id like '%${device_id}'
+        </if>
+	    <if test="status != null" >
+	       and t.status = #{status}
+	    </if>
+        <if test="user_path != null and user_path!='' ">
+				AND t.id in (select device_id from SNDB_Distribution.t_device_belong b where b.company_id=#{company_id} and b.user_path like '${user_path}%')
+		</if>
+    </select> 
+    <insert id="save" parameterType="com.scinan.iot.s6000.dao.domain.RepairMaintainInfo">
+        insert into t_repair_maintain_info
+          (
+            device_id,company_id,user_id,device_name,title,contacts_name,contacts_phone,repair_details,create_time,status,type
+          )
+        values
+          (
+    	    	    #{device_id},
+	    	    	#{company_id},
+	    	    	#{user_id},
+	    	    	#{device_name},
+	    	    	#{title},
+	    	    	#{contacts_name},
+	    	    	#{contacts_phone},
+	    	    	#{repair_details},
+	    	    	#{create_time},
+	    	    	#{status},
+	    	    	#{type}
+	          )
+    </insert>
+    <select id="fetchById" parameterType="java.util.Map" resultType="com.scinan.iot.s6000.dao.domain.RepairMaintainInfo">
+        SELECT
+        <include refid="sql_columns" />
+        FROM t_repair_maintain_info t
+        where (1=1)
+        <if test="id != null" >
+	        and id = #{id}
+	    </if>
+	    <if test="device_id != null" >
+	       and device_id = #{device_id}
+	    </if>
+	    <if test="status != null" >
+	       and status = #{status}
+	    </if>
+	    <if test="user_id != null" >
+	       and user_id = #{user_id}
+	    </if>
+        order by id desc limit 1
+    </select>
+    <update id="update" parameterType="com.scinan.iot.s6000.dao.domain.RepairMaintainInfo">
+		update t_repair_maintain_info
+	    <set >
+	        <if test="device_id != null" >
+    	    		device_id = #{device_id},
+		    </if>
+        	<if test="company_id != null" >
+    	    		company_id = #{company_id},
+		    </if>
+		    <if test="type != null" >
+    	    		type = #{type},
+		    </if>
+        	<if test="user_id != null" >
+    	    		user_id = #{user_id},
+		    </if>
+        	<if test="device_name != null" >
+    	    		device_name = #{device_name},
+		    </if>
+        	<if test="title != null" >
+    	    		title = #{title},
+		    </if>
+        	<if test="update_time != null" >
+    	    		update_time = #{update_time},
+		    </if>
+		    <if test="contacts_name != null" >
+    	    		contacts_name = #{contacts_name},
+		    </if>
+		    <if test="contacts_phone != null" >
+    	    		contacts_phone = #{contacts_phone},
+		    </if>
+		    <if test="repair_details != null" >
+    	    		repair_details = #{repair_details},
+		    </if>
+		    <if test="status != null" >
+    	    		status = #{status},
+		    </if>
+		    <if test="status != null" >
+    	    		status = #{status},
+		    </if>
+		    <if test="handle_time != null" >
+    	    		handle_time = #{handle_time},
+		    </if>
+		    <if test="repair_money != null" >
+    	    		repair_money = #{repair_money},
+		    </if>
+		    <if test="handle_desc != null" >
+    	    		handle_desc = #{handle_desc},
+		    </if>
+		    <if test="handle_man != null" >
+    	    		handle_man = #{handle_man},
+		    </if>
+		    <if test="maintain_process != null" >
+    	    		maintain_process = #{maintain_process},
+		    </if>
+    	</set>
+	    where id=#{id}
+    </update>
+     <delete id="delete" parameterType="java.lang.Long">
+        delete from t_repair_maintain_info where id=#{id}
+    </delete>
+    
+    
+    
+    
+</mapper>
